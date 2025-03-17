@@ -5,7 +5,6 @@ import { ConfigService } from '@nestjs/config';
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 import { join } from 'path';
 import { USER_PACKAGE_NAME } from '@repo/proto/src/types/user';
-import { UserService } from './user/user.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -36,8 +35,8 @@ async function bootstrap() {
     await app.startAllMicroservices();
     console.log(`User Service: gRPC server is running on port ${grpcPort}`);
 
-    await app.listen(port);
-    console.log(`User Service: HTTP server is running on port ${port}`);
+    // await app.listen(port);
+    // console.log(`User Service: HTTP server is running on port ${port}`);
   } catch (error) {
     console.error('User Service: Failed to start:', error);
     process.exit(1);

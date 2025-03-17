@@ -4,11 +4,14 @@ import {
   IsString,
   IsStrongPassword,
   MinLength,
-} from 'class-validator';
+} from "class-validator";
 
-export class AuthInputDto {
+export class CreateUserDto {
   @IsNotEmpty()
-  @IsEmail({}, { message: 'Invalid email' })
+  @IsString()
+  name: string;
+  @IsEmail({}, { message: "Invalid email" })
+  @IsNotEmpty()
   email: string;
   @IsNotEmpty()
   @IsString()

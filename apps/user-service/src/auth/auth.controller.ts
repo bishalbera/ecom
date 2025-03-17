@@ -1,19 +1,39 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthInputDto } from './dto/auth-input';
-import { CreateUserDto } from 'src/dto/create-user.dto';
-
-@Controller('auth')
-export class AuthController {
+import {
+  CreateUserRequest,
+  FindUserRequest,
+  FindUserResponse,
+  LoginRequest,
+  LoginResult,
+  User,
+  UserServiceController,
+  UserServiceControllerMethods,
+} from '@repo/proto/src/types/user';
+import { Observable } from 'rxjs';
+@Controller()
+@UserServiceControllerMethods()
+export class AuthController implements UserServiceController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('signup')
-  async signUp(@Body() createUserDto: CreateUserDto) {
-    return this.authService.createUser(createUserDto);
+  createUser(
+    request: CreateUserRequest,
+  ): Promise<User> | Observable<User> | User {
+    return this.authService.createUser(request);
   }
 
-  @Post('login')
-  async login(@Body() authInput: AuthInputDto) {
-    return this.authService.login(authInput);
+  login(
+    request: LoginRequest,
+  ): Promise<LoginResult> | Observable<LoginResult> | LoginResult {
+    return this.authService.login(request);
+  }
+
+  findUser(
+    request: FindUserRequest,
+  ):
+    | Promise<FindUserResponse>
+    | Observable<FindUserResponse>
+    | FindUserResponse {
+    return this.authService.findUser(request.email);
   }
 }

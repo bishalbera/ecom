@@ -50,6 +50,9 @@ importers:
       '@repo/proto':
         specifier: workspace:*
         version: link:../../packages/proto
+      '@repo/shared-dtos':
+        specifier: workspace:*
+        version: link:../../packages/shared-dtos
       bcryptjs:
         specifier: ^3.0.2
         version: 3.0.2
@@ -180,6 +183,9 @@ importers:
       '@repo/proto':
         specifier: workspace:*
         version: link:../../packages/proto
+      '@repo/shared-dtos':
+        specifier: workspace:*
+        version: link:../../packages/shared-dtos
       bcryptjs:
         specifier: ^3.0.2
         version: 3.0.2
@@ -368,6 +374,25 @@ importers:
       ts-proto:
         specifier: ^2.6.1
         version: 2.6.1
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      typescript:
+        specifier: latest
+        version: 5.8.2
+
+  packages/shared-dtos:
+    dependencies:
+      class-transformer:
+        specifier: ^0.5.1
+        version: 0.5.1
+      class-validator:
+        specifier: ^0.14.1
+        version: 0.14.1
+      reflect-metadata:
+        specifier: ^0.2.2
+        version: 0.2.2
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*

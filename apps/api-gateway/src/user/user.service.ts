@@ -1,11 +1,12 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
-import { Observable } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import {
-  FindUserResponse,
+  User,
   USER_SERVICE_NAME,
   UserServiceClient,
 } from '@repo/proto/src/types/user';
+import { CreateUserDto, LoginDto } from '@repo/shared-dtos/src/dtos';
 
 @Injectable()
 export class UserService implements OnModuleInit {
@@ -18,7 +19,20 @@ export class UserService implements OnModuleInit {
       this.client.getService<UserServiceClient>(USER_SERVICE_NAME);
   }
 
-  findUser(email: string): Observable<FindUserResponse> {
-    return this.userService.findUser({ email });
+  async findUser(email: string): Promise<User> {
+    const user = await firstValueFrom(this.userService.findUser({ email }));
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+    };
+  }
+
+  async createUser(createUserDto: CreateUserDto): Promise<User> {
+    return await firstValueFrom(this.userService.createUser(createUserDto));
+  }
+
+  async login(loginDto: LoginDto) {
+    return this.userService.login(loginDto);
   }
 }

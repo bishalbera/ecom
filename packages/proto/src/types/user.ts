@@ -10,6 +10,30 @@ import { Observable } from "rxjs";
 
 export const protobufPackage = "user";
 
+export interface CreateUserRequest {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginResult {
+  accessToken: string;
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+}
+
 export interface FindUserRequest {
   email: string;
 }
@@ -24,15 +48,23 @@ export const USER_PACKAGE_NAME = "user";
 
 export interface UserServiceClient {
   findUser(request: FindUserRequest): Observable<FindUserResponse>;
+
+  login(request: LoginRequest): Observable<LoginResult>;
+
+  createUser(request: CreateUserRequest): Observable<User>;
 }
 
 export interface UserServiceController {
   findUser(request: FindUserRequest): Promise<FindUserResponse> | Observable<FindUserResponse> | FindUserResponse;
+
+  login(request: LoginRequest): Promise<LoginResult> | Observable<LoginResult> | LoginResult;
+
+  createUser(request: CreateUserRequest): Promise<User> | Observable<User> | User;
 }
 
 export function UserServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ["findUser"];
+    const grpcMethods: string[] = ["findUser", "login", "createUser"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod("UserService", method)(constructor.prototype[method], method, descriptor);
