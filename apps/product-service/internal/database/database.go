@@ -28,6 +28,7 @@ type Service interface {
 
 	GetByID(id string) (*models.Products, error)
 	UploadMany(products []models.Products) error
+	SearchProducts(query string, category string, minPrice, maxPrice float32, sort string, page, limit int) ([]models.Products, error)
 }
 
 type service struct {
@@ -70,6 +71,53 @@ func (s *service) GetByID(id string) (*models.Products, error) {
 
 	}
 	return &product, nil
+}
+
+func (s *service) SearchProducts(query string, category string, minPrice, maxPrice float32, sort string, page, limit int) ([]models.Products, error) {
+
+	var products []models.Products
+
+	db := s.db.Model(&models.Products{})
+
+	// Full-text search
+	if query != "" {
+		tsQuery := fmt.Sprintf("plainto_tsquery('english', ?)")
+		db = db.Where("to_tsvector('english', name || ' ' || description || ' ' || category) @@ "+tsQuery, query)
+	}
+
+	// Filters
+	if category != "" {
+		db = db.Where("category = ?", category)
+	}
+	if minPrice > 0 {
+		db = db.Where("price >= ?", minPrice)
+	}
+	if maxPrice > 0 {
+		db = db.Where("price <= ?", maxPrice)
+	}
+
+	// Soring
+	switch sort {
+	case "price_asc":
+		db = db.Order("price ASC")
+	case "price_desc":
+		db = db.Order("price DESC")
+	case "rating":
+		db = db.Order("rating DESC")
+	default:
+		db = db.Order("created_at DESC")
+
+	}
+
+	// Pagination
+	offset := (page - 1) * limit
+	db = db.Offset(offset).Limit(limit)
+
+	if err := db.Find(&products).Error; err != nil {
+		return nil, err
+	}
+
+	return products, nil
 }
 
 func (s *service) UploadMany(products []models.Products) error {

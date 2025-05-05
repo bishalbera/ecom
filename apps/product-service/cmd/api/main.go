@@ -6,7 +6,9 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"product-service/internal/server"
+	"product-service/internal/database"
+	"product-service/internal/grpc_server"
+	"product-service/internal/http_server"
 	"strconv"
 	"syscall"
 	"time"
@@ -14,7 +16,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 )
 
-func gracefulShutdown(server *server.Server, done chan bool) {
+func gracefulShutdown(server *http_server.Server, done chan bool) {
 	// Create context that listens for the interrupt signal from the OS.
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -41,10 +43,10 @@ func gracefulShutdown(server *server.Server, done chan bool) {
 
 func main() {
 
-	server := server.New()
+	db := database.New()
+	server := http_server.New()
 
 	server.RegisterFiberRoutes()
-
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
 
@@ -56,6 +58,14 @@ func main() {
 		}
 	}()
 
+	// Create and start grpc server
+	go func() {
+
+		log.Println("Starting grpc server on port 50053...")
+		if err := grpc_server.NewGrpcServer(db); err != nil {
+			log.Fatalf("grpc server error: %v", err)
+		}
+	}()
 	// Run graceful shutdown in a separate goroutine
 	go gracefulShutdown(server, done)
 
