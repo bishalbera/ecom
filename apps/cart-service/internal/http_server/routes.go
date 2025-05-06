@@ -1,4 +1,4 @@
-package server
+package http_server
 
 import (
 	"cart-service/internal/model"
@@ -41,7 +41,7 @@ func (s *FiberServer) AddItemHandler(c *fiber.Ctx) error {
 	if err := c.BodyParser(&item); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid input"})
 	}
-	err := s.db.AddItem(userId, item)
+	err := s.db.AddItem(userId, item.ProductId, int32(item.Quantity))
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}

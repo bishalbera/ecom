@@ -19,7 +19,7 @@ import (
 type Service interface {
 	Health() map[string]string
 	GetCart(userId string) (*model.Cart, error)
-	AddItem(userId string, item model.CartItems) error
+	AddItem(userId string, productId string, quantity int32) error
 	ClearCart(userId string) error
 }
 
@@ -72,7 +72,7 @@ func (s *service) GetCart(userId string) (*model.Cart, error) {
 	return &cart, err
 }
 
-func (s *service) AddItem(userId string, item model.CartItems) error {
+func (s *service) AddItem(userId string, productId string, quantity int32) error {
 	cart, err := s.GetCart(userId)
 	if err != nil {
 		return err
@@ -80,15 +80,18 @@ func (s *service) AddItem(userId string, item model.CartItems) error {
 
 	updated := false
 	for i, ci := range cart.Items {
-		if ci.ProductId == item.ProductId {
+		if ci.ProductId == productId {
 
-			cart.Items[i].Quantity += item.Quantity
+			cart.Items[i].Quantity += int(quantity)
 			updated = true
 			break
 		}
 	}
 	if !updated {
-		cart.Items = append(cart.Items, item)
+		cart.Items = append(cart.Items, model.CartItems{
+			ProductId: productId,
+			Quantity: int(quantity),
+		})
 	}
 
 	data, _ := json.Marshal(cart)
