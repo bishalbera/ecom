@@ -19,6 +19,10 @@
     "./src/types/user": {
       "types": "./src/types/user.ts",
       "default": "./dist/types/user.js"
+    },
+    "./src/types/product": {
+      "types": "./src/types/product.ts",
+      "default": "./dist/types/product.js"
     }
   }
 }

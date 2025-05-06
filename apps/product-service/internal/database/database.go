@@ -26,7 +26,7 @@ type Service interface {
 	// It returns an error if the connection cannot be closed.
 	Close() error
 
-	GetByID(id string) (*models.Products, error)
+	GetById(id string) (*models.Products, error)
 	UploadMany(products []models.Products) error
 	SearchProducts(query string, category string, minPrice, maxPrice float32, sort string, page, limit int) ([]models.Products, error)
 }
@@ -64,7 +64,7 @@ func New() Service {
 	return dbInstance
 }
 
-func (s *service) GetByID(id string) (*models.Products, error) {
+func (s *service) GetById(id string) (*models.Products, error) {
 	var product models.Products
 	if err := s.db.Where("id = ?", id).First(&product).Error; err != nil {
 		return nil, err
@@ -105,7 +105,7 @@ func (s *service) SearchProducts(query string, category string, minPrice, maxPri
 	case "rating":
 		db = db.Order("rating DESC")
 	default:
-		db = db.Order("created_at DESC")
+		db = db.Order("rating DESC")
 
 	}
 

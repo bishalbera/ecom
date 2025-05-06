@@ -23,7 +23,7 @@ func (s *Server) RegisterFiberRoutes() {
 	s.App.Get("/", s.HelloWorldHandler)
 
 	s.App.Get("/health", s.healthHandler)
-	s.App.Get("/products/:id", s.GetProductByIDHandler)
+	s.App.Get("/products/:id", s.GetProductByIdHandler)
 	s.App.Post("/products", s.UploadProductsHandler)
 
 }
@@ -40,12 +40,12 @@ func (s *Server) healthHandler(c *fiber.Ctx) error {
 	return c.JSON(s.db.Health())
 }
 
-func (s *Server) GetProductByIDHandler(c *fiber.Ctx) error {
+func (s *Server) GetProductByIdHandler(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID"})
 	}
-	product, err := s.db.GetByID(id)
+	product, err := s.db.GetById(id)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "product not found"})
 	}

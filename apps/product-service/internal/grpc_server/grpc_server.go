@@ -29,8 +29,8 @@ func NewGrpcServer(db database.Service) error {
 
 }
 
-func (s *productServer) GetProductByID(ctx context.Context, req *pb.ProductReq) (*pb.ProductRes, error) {
-	product, err := s.db.GetByID(req.Id)
+func (s *productServer) GetProductById(ctx context.Context, req *pb.ProductReq) (*pb.ProductRes, error) {
+	product, err := s.db.GetById(req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (s *productServer) GetProductByID(ctx context.Context, req *pb.ProductReq) 
 	}, nil
 }
 
-func (s *productServer) Search(cotx context.Context, req *pb.SearchReq) (*pb.SearchRes, error) {
+func (s *productServer) SearchProducts(cotx context.Context, req *pb.SearchReq) (*pb.SearchRes, error) {
 
 	products, err := s.db.SearchProducts(
 		req.Query,
