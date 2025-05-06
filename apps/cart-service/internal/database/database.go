@@ -1,7 +1,9 @@
 package database
 
 import (
+	"cart-service/internal/model"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math"
@@ -16,6 +18,9 @@ import (
 
 type Service interface {
 	Health() map[string]string
+	GetCart(userId string) (*model.Cart, error)
+	AddItem(userId string, item model.CartItems) error
+	ClearCart(userId string) error
 }
 
 type service struct {
@@ -51,6 +56,47 @@ func New() Service {
 	s := &service{db: rdb}
 
 	return s
+}
+
+func (s *service) GetCart(userId string) (*model.Cart, error) {
+	var ctx = context.Background()
+	data, err := s.db.Get(ctx, userId).Result()
+	if err == redis.Nil {
+		return &model.Cart{UserId: userId, Items: []model.CartItems{}}, nil
+	} else if err != nil {
+		return nil, err
+
+	}
+	var cart model.Cart
+	err = json.Unmarshal([]byte(data), &cart)
+	return &cart, err
+}
+
+func (s *service) AddItem(userId string, item model.CartItems) error {
+	cart, err := s.GetCart(userId)
+	if err != nil {
+		return err
+	}
+
+	updated := false
+	for i, ci := range cart.Items {
+		if ci.ProductId == item.ProductId {
+
+			cart.Items[i].Quantity += item.Quantity
+			updated = true
+			break
+		}
+	}
+	if !updated {
+		cart.Items = append(cart.Items, item)
+	}
+
+	data, _ := json.Marshal(cart)
+	return s.db.Set(context.Background(), userId, data, 0).Err()
+}
+
+func (s *service) ClearCart(userId string) error {
+	return s.db.Del(context.Background(), userId).Err()
 }
 
 // Health returns the health status and statistics of the Redis server.
