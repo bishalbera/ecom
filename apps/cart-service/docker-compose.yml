@@ -1,0 +1,16 @@
+
+
+services:
+  redis:
+    image: redis:7.2.4
+    container_name: ${DB_ADDRESS}
+    ports:
+      - "${DB_PORT}:6379"
+    command: redis-server --requirepass ${DB_PASSWORD}
+    environment:
+      DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
