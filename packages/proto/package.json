@@ -23,6 +23,10 @@
     "./src/types/product": {
       "types": "./src/types/product.ts",
       "default": "./dist/types/product.js"
+    },
+    "./src/types/cart": {
+      "types": "./src/types/cart.ts",
+      "default": "./dist/types/cart.js"
     }
   }
 }

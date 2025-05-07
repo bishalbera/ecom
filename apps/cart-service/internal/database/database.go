@@ -73,6 +73,15 @@ func (s *service) GetCart(userId string) (*model.Cart, error) {
 }
 
 func (s *service) AddItem(userId string, productId string, quantity int32) error {
+	if userId == "" {
+		return fmt.Errorf("userId cannot be empty")
+	}
+	if productId == "" {
+		return fmt.Errorf("productId cannot be empty")
+	}
+	if quantity <= 0 {
+		return fmt.Errorf("quantity must be greater than 0")
+	}
 	cart, err := s.GetCart(userId)
 	if err != nil {
 		return err
@@ -90,7 +99,7 @@ func (s *service) AddItem(userId string, productId string, quantity int32) error
 	if !updated {
 		cart.Items = append(cart.Items, model.CartItems{
 			ProductId: productId,
-			Quantity: int(quantity),
+			Quantity:  int(quantity),
 		})
 	}
 
