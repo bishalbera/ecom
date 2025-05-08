@@ -12,6 +12,14 @@ build:
 # Run the application
 run:
 	@go run cmd/api/main.go
+
+# Generate the go code from protobuf
+gen:
+	@export PATH="$$PATH:$$GOPATH/bin:$$HOME/go/bin" && protoc \
+	  --go_out=. \
+	  --go_grpc_out=. \
+	  --proto_path=../../packages/proto/ \
+	  ../../packages/proto/product.proto
 # Create DB container
 docker-run:
 	@if docker compose up --build 2>/dev/null; then \
