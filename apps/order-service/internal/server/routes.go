@@ -20,7 +20,13 @@ func (s *FiberServer) RegisterFiberRoutes() {
 	s.App.Get("/", s.HelloWorldHandler)
 
 	s.App.Get("/health", s.healthHandler)
+	s.App.Get("/order/:id", s.GetOrderHandler)
+	s.App.Post("/order", s.CreateOrderHandler)
 
+}
+
+type CreateOrderRequest struct {
+	Items []model.OrderItems `json:"items"`
 }
 
 func (s *FiberServer) GetOrderHandler(c *fiber.Ctx) error {
@@ -30,7 +36,7 @@ func (s *FiberServer) GetOrderHandler(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid id"})
 
 	}
-	order, err := s.db.GetOrder(id)
+	order, err := s.Service.GetOrder(id)
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "order not found"})
 	}
@@ -38,12 +44,15 @@ func (s *FiberServer) GetOrderHandler(c *fiber.Ctx) error {
 }
 
 func (s *FiberServer) CreateOrderHandler(c *fiber.Ctx) error {
-	var order model.Order
-	if err := c.BodyParser(&order); err != nil {
+	var req CreateOrderRequest
+	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid input"})
-
 	}
-	order, err := s.db.CreateOrder(&order)
+	userId := c.Query("userId")
+	if userId == "" {
+		return c.Status(400).JSON(fiber.StatusBadRequest)
+	}
+	order, err := s.Service.CreateOrder(userId, req.Items)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}

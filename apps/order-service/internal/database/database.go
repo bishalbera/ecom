@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/uuid"
 	_ "github.com/joho/godotenv/autoload"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -24,8 +23,9 @@ type Service interface {
 	// Close terminates the database connection.
 	// It returns an error if the connection cannot be closed.
 	Close() error
-	CreateOrder(userId string, total float64, items []model.OrderItems) (*model.Order, error)
+	CreateOrder(order *model.Order) (*model.Order, error)
 	GetOrder(id string) (*model.Order, error)
+	GetAllOrders() ([]*model.Order,error)
 }
 
 type service struct {
@@ -56,7 +56,7 @@ func New() Service {
 		log.Fatal(err)
 	}
 
-	if err := db.AutoMigrate(&model.Order{}); err != nil {
+	if err := db.AutoMigrate(&model.Order{}, &model.OrderItems{}); err != nil {
 		log.Fatalf("failed to migrate database: %v", err)
 	}
 
@@ -64,6 +64,11 @@ func New() Service {
 		db: db,
 	}
 	return dbInstance
+}
+
+func (s *service) GetAllOrders() ([]*model.Order, error) {
+	var orders []*model.Order
+	if err:= s.db.Preload("Items").
 }
 
 func (s *service) GetOrder(id string) (*model.Order, error) {
@@ -74,22 +79,14 @@ func (s *service) GetOrder(id string) (*model.Order, error) {
 	return &order, nil
 }
 
-func (s *service) CreateOrder(userId string, total float64, items []model.OrderItems) (*model.Order, error) {
+func (s *service) CreateOrder(order *model.Order) (*model.Order, error) {
 
-	order := model.Order{
-		Id:          uuid.New(),
-		Total:       total,
-		UserId:      userId,
-		Items:       items,
-		OrderStatus: "PENDING",
-	}
-
-	if err := s.db.Create(&order).Error; err != nil {
+	if err := s.db.Create(order).Error; err != nil {
 		return nil, err
 
 	}
 
-	return &order, nil
+	return order, nil
 }
 
 // Health checks the health of the database connection by pinging the database.

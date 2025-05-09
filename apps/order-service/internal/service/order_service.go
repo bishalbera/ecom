@@ -20,6 +20,10 @@ func NewOrderSvc(db database.Service, productCl *grpc.ProductClient) *OrderServi
 	}
 }
 
+func (s *OrderService) GetOrder(orderId string) (*model.Order,error) {
+	return s.db.GetOrder(orderId)
+}
+
 func (s *OrderService) CreateOrder(userId string, items []model.OrderItems) (*model.Order, error) {
 	var total float64
 
@@ -39,5 +43,5 @@ func (s *OrderService) CreateOrder(userId string, items []model.OrderItems) (*mo
 		Total:       total,
 		OrderStatus: "PENDING",
 	}
-	return s.db.CreateOrder(userId, total, items)
+	return s.db.CreateOrder(order)
 }
