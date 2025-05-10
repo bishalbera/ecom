@@ -25,7 +25,7 @@ type Service interface {
 	Close() error
 	CreateOrder(order *model.Order) (*model.Order, error)
 	GetOrder(id string) (*model.Order, error)
-	GetAllOrders() ([]*model.Order,error)
+	GetAllOrders() ([]*model.Order, error)
 }
 
 type service struct {
@@ -68,7 +68,10 @@ func New() Service {
 
 func (s *service) GetAllOrders() ([]*model.Order, error) {
 	var orders []*model.Order
-	if err:= s.db.Preload("Items").
+	if err := s.db.Preload("Items").Find(&orders).Error; err != nil {
+		return nil, err
+	}
+	return orders, nil
 }
 
 func (s *service) GetOrder(id string) (*model.Order, error) {

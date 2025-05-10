@@ -21,6 +21,7 @@ func (s *FiberServer) RegisterFiberRoutes() {
 
 	s.App.Get("/health", s.healthHandler)
 	s.App.Get("/order/:id", s.GetOrderHandler)
+	s.App.Get("/orders", s.GetAllOrdersHandler)
 	s.App.Post("/order", s.CreateOrderHandler)
 
 }
@@ -29,6 +30,14 @@ type CreateOrderRequest struct {
 	Items []model.OrderItems `json:"items"`
 }
 
+func (s *FiberServer) GetAllOrdersHandler(c *fiber.Ctx) error {
+	orders, err := s.Service.GetAllOrders()
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+
+	}
+	return c.JSON(orders)
+}
 func (s *FiberServer) GetOrderHandler(c *fiber.Ctx) error {
 
 	id := c.Params("id")

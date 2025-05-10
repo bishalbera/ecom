@@ -20,7 +20,11 @@ func NewOrderSvc(db database.Service, productCl *grpc.ProductClient) *OrderServi
 	}
 }
 
-func (s *OrderService) GetOrder(orderId string) (*model.Order,error) {
+func (s *OrderService) GetAllOrders() ([]*model.Order, error) {
+	return s.db.GetAllOrders()
+}
+
+func (s *OrderService) GetOrder(orderId string) (*model.Order, error) {
 	return s.db.GetOrder(orderId)
 }
 
