@@ -1,12 +1,16 @@
-package server
+package httpserver
 
 import (
 	"github.com/gofiber/fiber/v2"
 
-	"google.golang.org/grpc"
 	"order-service/internal/database"
 	grpcclient "order-service/internal/grpc"
+	"order-service/internal/ports"
 	"order-service/internal/service"
+
+	"google.golang.org/grpc"
+
+	pb "order-service/github.com/ecom/packages/proto/product"
 )
 
 type FiberServer struct {
@@ -20,8 +24,10 @@ func New() *FiberServer {
 	if err != nil {
 		panic(err)
 	}
+	productGrpcClient := pb.NewProductServiceClient(conn)
+	var productCl ports.ProductClient = grpcclient.NewProductClient(productGrpcClient)
 	db := database.New()
-	productCl := grpcclient.NewProductClient(conn)
+
 	orderSvc := service.NewOrderSvc(db, productCl)
 	server := &FiberServer{
 		App: fiber.New(fiber.Config{

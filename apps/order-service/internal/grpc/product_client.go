@@ -4,16 +4,15 @@ import (
 	"context"
 	pb "order-service/github.com/ecom/packages/proto/product"
 
-	"google.golang.org/grpc"
 )
 
 type ProductClient struct {
 	client pb.ProductServiceClient
 }
 
-func NewProductClient(conn *grpc.ClientConn) *ProductClient {
+func NewProductClient(client pb.ProductServiceClient) *ProductClient {
 	return &ProductClient{
-		client: pb.NewProductServiceClient(conn),
+		client: client,
 	}
 }
 

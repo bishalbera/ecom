@@ -13,7 +13,7 @@ type Order struct {
 }
 
 type OrderItems struct {
-	Id        uint   `gorm:"primary_key"`
+	Id        string   `gorm:"primary_key"`
 	ProductId string `json:"product_id"`
 	OrderId   uuid.UUID
 	Quantity  int     `json:"quantity"`

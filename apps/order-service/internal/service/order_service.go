@@ -2,18 +2,18 @@ package service
 
 import (
 	"order-service/internal/database"
-	"order-service/internal/grpc"
 	"order-service/internal/model"
+	"order-service/internal/ports"
 
 	"github.com/google/uuid"
 )
 
 type OrderService struct {
 	db        database.Service
-	productCl *grpc.ProductClient
+	productCl ports.ProductClient
 }
 
-func NewOrderSvc(db database.Service, productCl *grpc.ProductClient) *OrderService {
+func NewOrderSvc(db database.Service, productCl ports.ProductClient) *OrderService {
 	return &OrderService{
 		db:        db,
 		productCl: productCl,

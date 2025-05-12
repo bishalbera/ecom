@@ -4,7 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"order-service/internal/server"
+	"order-service/internal/database"
+	"order-service/internal/grpc"
+	httpserver "order-service/internal/http_server"
+	"order-service/internal/ports"
+	"order-service/internal/service"
 	"os"
 	"os/signal"
 	"strconv"
@@ -14,7 +18,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 )
 
-func gracefulShutdown(fiberServer *server.FiberServer, done chan bool) {
+func gracefulShutdown(fiberServer *httpserver.FiberServer, done chan bool) {
 	// Create context that listens for the interrupt signal from the OS.
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -41,9 +45,13 @@ func gracefulShutdown(fiberServer *server.FiberServer, done chan bool) {
 
 func main() {
 
-	server := server.New()
+	server := httpserver.New()
 
 	server.RegisterFiberRoutes()
+	db := database.New()
+	var productCl ports.ProductClient
+
+	svc := service.NewOrderSvc(db, productCl)
 
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
@@ -53,6 +61,13 @@ func main() {
 		err := server.Listen(fmt.Sprintf(":%d", port))
 		if err != nil {
 			panic(fmt.Sprintf("http server error: %s", err))
+		}
+	}()
+
+	go func() {
+		log.Println("Starting GRPC server on :50055")
+		if err := grpc.NewGrpcServer(svc); err != nil {
+			log.Fatalf("grpc server error %v", err)
 		}
 	}()
 

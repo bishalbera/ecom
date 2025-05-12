@@ -19,6 +19,12 @@ gen:
 	  --go_out=. \
 	  --go_grpc_out=. \
 	  --proto_path=../../packages/proto/ \
+	  ../../packages/proto/order.proto
+gen-product:
+	@export PATH="$$PATH:$$GOPATH/bin:$$HOME/go/bin" && protoc \
+	  --go_out=. \
+	  --go_grpc_out=. \
+	  --proto_path=../../packages/proto/ \
 	  ../../packages/proto/product.proto
 # Create DB container
 docker-run:
