@@ -15,6 +15,10 @@
     "typescript": "latest"
   },
   "exports": {
+    "./src/dtos/create-order-req.dto": {
+      "types": "./src/dtos/create-order-req.dto.ts",
+      "default": "./src/dtos/create-order-req.dto.js"
+    },
     "./src/dtos/create-user.dto": {
       "types": "./src/dtos/create-user.dto.ts",
       "default": "./dist/dtos/create-user.dto.js"

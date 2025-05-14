@@ -29,9 +29,16 @@ func (s *OrderService) GetOrder(orderId string) (*model.Order, error) {
 }
 
 func (s *OrderService) CreateOrder(userId string, items []model.OrderItems) (*model.Order, error) {
+	order := &model.Order{
+		Id:          uuid.New(),
+		UserId:      userId,
+		Items:       items,
+		OrderStatus: "PENDING",
+	}
 	var total float64
 
 	for i := range items {
+		items[i].OrderId = order.Id
 		price, err := s.productCl.GetPrice(items[i].ProductId)
 		if err != nil {
 			return nil, err
@@ -40,12 +47,9 @@ func (s *OrderService) CreateOrder(userId string, items []model.OrderItems) (*mo
 		total += float64(items[i].Quantity) * price
 	}
 
-	order := &model.Order{
-		Id:          uuid.New(),
-		UserId:      userId,
-		Items:       items,
-		Total:       total,
-		OrderStatus: "PENDING",
-	}
+	order.Items = items
+	order.Total = total
+
+	
 	return s.db.CreateOrder(order)
 }

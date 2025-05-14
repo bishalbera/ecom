@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"order-service/internal/database"
-	"order-service/internal/grpc"
 	httpserver "order-service/internal/http_server"
 	"order-service/internal/ports"
 	"order-service/internal/service"
@@ -15,7 +14,11 @@ import (
 	"syscall"
 	"time"
 
+	productpb "order-service/github.com/ecom/packages/proto/product"
+	client "order-service/internal/grpc"
+
 	_ "github.com/joho/godotenv/autoload"
+	"google.golang.org/grpc"
 )
 
 func gracefulShutdown(fiberServer *httpserver.FiberServer, done chan bool) {
@@ -49,7 +52,15 @@ func main() {
 
 	server.RegisterFiberRoutes()
 	db := database.New()
-	var productCl ports.ProductClient
+
+	conn, err := grpc.Dial("localhost:50053", grpc.WithInsecure()) // Adjust host/port as needed
+	if err != nil {
+		log.Fatalf("Could not connect to product service: %v", err)
+	}
+	defer conn.Close()
+	productGrpcclient := productpb.NewProductServiceClient(conn)
+
+	var productCl ports.ProductClient = client.NewProductClient(productGrpcclient)
 
 	svc := service.NewOrderSvc(db, productCl)
 
@@ -66,7 +77,7 @@ func main() {
 
 	go func() {
 		log.Println("Starting GRPC server on :50055")
-		if err := grpc.NewGrpcServer(svc); err != nil {
+		if err := client.NewGrpcServer(svc); err != nil {
 			log.Fatalf("grpc server error %v", err)
 		}
 	}()

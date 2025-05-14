@@ -13,6 +13,9 @@ import { ProductService } from './product/product.service';
 import { ProductController } from './product/product.controller';
 import { CartController } from './cart/cart.controller';
 import { CartService } from './cart/cart.service';
+import { ORDER_SERVICE_NAME } from '@repo/proto/src/types/order';
+import { OrderController } from './order/order.controller';
+import { OrderService } from './order/order.service';
 
 @Module({
   imports: [
@@ -34,6 +37,21 @@ import { CartService } from './cart/cart.service';
               'localhost:5001',
             package: 'user',
             protoPath: join(__dirname, '/../../../packages/proto/user.proto'),
+          },
+        }),
+      },
+      {
+        name: ORDER_SERVICE_NAME,
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (configService: ConfigService) => ({
+          transport: Transport.GRPC,
+          options: {
+            url:
+              configService.get<string>('ORDER_SERVICE_GRPC_URL') ||
+              'localhost:50055',
+            package: 'order',
+            protoPath: join(__dirname, '/../../../packages/proto/order.proto'),
           },
         }),
       },
@@ -73,8 +91,8 @@ import { CartService } from './cart/cart.service';
       },
     ]),
   ],
-  controllers: [UserController, ProductController, CartController],
-  providers: [UserService, JwtStrategy, ProductService, CartService],
+  controllers: [UserController, ProductController, CartController, OrderController],
+  providers: [UserService, JwtStrategy, ProductService, CartService, OrderService],
   exports: [],
 })
 export class AppModule {}

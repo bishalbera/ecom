@@ -9,6 +9,8 @@ import (
 	"order-service/internal/service"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type OrderGrpcServer struct {
@@ -35,7 +37,7 @@ func (s *OrderGrpcServer) GetOrder(ctx context.Context, req *pb.GetOrderReq) (*p
 	return mapToOrderRes(order), nil
 }
 
-func (s *OrderGrpcServer) GetAllOrder(ctx context.Context, _ *pb.Empty) (*pb.AllOrderRes, error) {
+func (s *OrderGrpcServer) GetAllOrders(ctx context.Context, _ *pb.Empty) (*pb.AllOrderRes, error) {
 	orders, err := s.svc.GetAllOrders()
 	if err != nil {
 		return nil, err
@@ -48,10 +50,16 @@ func (s *OrderGrpcServer) GetAllOrder(ctx context.Context, _ *pb.Empty) (*pb.All
 	return &res, nil
 }
 
-func (s *OrderGrpcServer) CreatOrder(ctx context.Context, req *pb.CreateOrderReq) (*pb.OrderRes, error) {
+func (s *OrderGrpcServer) CreateOrder(ctx context.Context, req *pb.CreateOrderReq) (*pb.OrderRes, error) {
+	if req.UserId == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "invaild input")
+	}
 
 	var items []model.OrderItems
 	for _, item := range req.Items {
+		if item.ProductId == "" {
+			return nil, status.Errorf(codes.InvalidArgument, "productId cannot be empty")
+		}
 		items = append(items, model.OrderItems{
 			ProductId: item.ProductId,
 			Quantity:  int(item.Quantity),
