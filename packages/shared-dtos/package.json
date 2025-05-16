@@ -1,0 +1,31 @@
+{
+  "name": "@repo/shared-dtos",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tsc",
+    "start:dev": "tsc --watch"
+  },
+  "dependencies": {
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "reflect-metadata": "^0.2.2"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "latest"
+  },
+  "exports": {
+    "./src/dtos/create-order-req.dto": {
+      "types": "./src/dtos/create-order-req.dto.ts",
+      "default": "./src/dtos/create-order-req.dto.js"
+    },
+    "./src/dtos/create-user.dto": {
+      "types": "./src/dtos/create-user.dto.ts",
+      "default": "./dist/dtos/create-user.dto.js"
+    },
+    "./src/dtos/login.dto": {
+      "types": "./src/dtos/login.dto.ts",
+      "default":"./dist/dtos/login.dto.js"
+    }
+  }
+}

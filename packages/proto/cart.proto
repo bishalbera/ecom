@@ -1,0 +1,50 @@
+syntax="proto3";
+
+package cart;
+
+option go_package = "github.com/ecom/packages/proto/cart";
+
+service CartService {
+	rpc GetCart (CartReq) returns (CartRes);
+	rpc AddItem (AddItemReq) returns (AddItemRes);
+	rpc ClearCart (ClearCartReq) returns (ClearCartRes);
+}
+
+message Cart {
+	string userId = 1;
+	repeated CartItems items = 2;
+}
+
+message CartItems {
+	string productId = 1;
+	int32  quantity = 2;
+}
+
+message CartReq {
+	string userId = 1;
+}
+
+message CartRes {
+	string userId = 1;
+	repeated CartItems items = 2;
+}
+
+message AddItemReq {
+	string userId = 1;
+	string productId = 2;
+	int32 quantity = 3;
+}
+
+message AddItemRes{
+	string msg = 1;
+}
+
+message ClearCartReq {
+	string userId = 1;
+}
+
+message ClearCartRes {
+	string msg = 1;
+}
+
+
