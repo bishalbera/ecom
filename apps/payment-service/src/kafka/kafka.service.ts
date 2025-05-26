@@ -1,8 +1,8 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Kafka, Producer } from 'kafkajs';
 
 @Injectable()
-export class KafkaService implements OnModuleInit {
+export class KafkaService implements OnModuleInit, OnModuleDestroy {
   private producer: Producer;
 
   async onModuleInit() {
@@ -16,5 +16,9 @@ export class KafkaService implements OnModuleInit {
       topic,
       messages: [{ key: message.key, value: JSON.stringify(message.value) }],
     });
+  }
+
+  async onModuleDestroy() {
+    await this.producer.disconnect();
   }
 }

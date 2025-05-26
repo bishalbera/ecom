@@ -26,6 +26,7 @@ type Service interface {
 	CreateOrder(order *model.Order) (*model.Order, error)
 	GetOrder(id string) (*model.Order, error)
 	GetAllOrders() ([]*model.Order, error)
+	UpdateOrderStatus(id string, status string) error
 }
 
 type service struct {
@@ -64,6 +65,14 @@ func New() Service {
 		db: db,
 	}
 	return dbInstance
+}
+
+func (s *service) UpdateOrderStatus(id string, status string) error {
+	var order model.Order
+	if err := s.db.Model(&order).Where("id = ?", id).Update("orderStatus", status).Error; err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *service) GetAllOrders() ([]*model.Order, error) {

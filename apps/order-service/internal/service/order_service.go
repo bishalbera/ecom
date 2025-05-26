@@ -20,6 +20,9 @@ func NewOrderSvc(db database.Service, productCl ports.ProductClient) *OrderServi
 	}
 }
 
+func (s *OrderService) UpdateOrderStatus(id string, status string) error {
+	return s.db.UpdateOrderStatus(id, status)
+}
 func (s *OrderService) GetAllOrders() ([]*model.Order, error) {
 	return s.db.GetAllOrders()
 }
@@ -50,6 +53,5 @@ func (s *OrderService) CreateOrder(userId string, items []model.OrderItems) (*mo
 	order.Items = items
 	order.Total = total
 
-	
 	return s.db.CreateOrder(order)
 }

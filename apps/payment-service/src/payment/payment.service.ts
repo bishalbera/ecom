@@ -1,13 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ClientGrpc } from '@nestjs/microservices';
+import {
+  GetOrderReq,
+  ORDER_SERVICE_NAME,
+  OrderServiceClient,
+} from '@repo/proto/src/types/order';
 import { KafkaService } from 'src/kafka/kafka.service';
 import Stripe from 'stripe';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class PaymentService {
   private stripe: Stripe;
+  private orderService: OrderServiceClient;
 
   constructor(
+    @Inject(ORDER_SERVICE_NAME) private readonly grpcClient: ClientGrpc,
     private readonly configService: ConfigService,
     private readonly kafkaService: KafkaService,
   ) {
@@ -17,13 +26,31 @@ export class PaymentService {
     );
   }
 
-  async createPaymentIntent(orderId: string, amount: number, currency = 'usd') {
+  onModuleInit() {
+    this.orderService =
+      this.grpcClient.getService<OrderServiceClient>(ORDER_SERVICE_NAME);
+  }
+
+  async createPaymentIntent(orderId: string) {
+    const order = await firstValueFrom(
+      this.orderService.getOrder({ id: orderId } as GetOrderReq),
+    );
     const paymentIntent = await this.stripe.paymentIntents.create({
-      amount,
-      currency,
-      metadata: { orderId },
+      amount: Math.round(order.total * 100),
+      currency: 'usd',
+      metadata: { orderId: order.id },
     });
     return { clientSecret: paymentIntent.client_secret };
+  }
+
+  async handleSuccessfulPayment(event: Stripe.PaymentIntent) {
+    const orderId = event.metadata?.orderId;
+    if (!orderId) return;
+
+    await this.kafkaService.send('order-events', {
+      type: 'ORDER_PAID',
+      orderId,
+    });
   }
 
   async handleStripeWebhook(payload: Buffer, signature: string) {
@@ -45,13 +72,7 @@ export class PaymentService {
       const orderId = paymentIntent.metadata.orderId;
 
       // Send kafka message to update order status
-      await this.kafkaService.send('order-events', {
-        key: orderId,
-        value: {
-          eventType: 'ORDER_PAID',
-          orderId,
-        },
-      });
+      await this.handleSuccessfulPayment(paymentIntent);
     }
     return { received: true };
   }

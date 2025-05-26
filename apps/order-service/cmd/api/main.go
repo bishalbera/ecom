@@ -6,6 +6,7 @@ import (
 	"log"
 	"order-service/internal/database"
 	httpserver "order-service/internal/http_server"
+	"order-service/internal/kafka"
 	"order-service/internal/ports"
 	"order-service/internal/service"
 	"os"
@@ -63,6 +64,7 @@ func main() {
 	var productCl ports.ProductClient = client.NewProductClient(productGrpcclient)
 
 	svc := service.NewOrderSvc(db, productCl)
+	kafka.ConsumeOrderEvents(*svc)
 
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
