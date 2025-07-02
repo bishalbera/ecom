@@ -16,6 +16,7 @@ import (
 	"time"
 
 	productpb "order-service/github.com/ecom/packages/proto/product"
+	// paymentpb "order-service/github.com/ecom/packages/proto/payment"
 	client "order-service/internal/grpc"
 
 	_ "github.com/joho/godotenv/autoload"
@@ -54,16 +55,25 @@ func main() {
 	server.RegisterFiberRoutes()
 	db := database.New()
 
-	conn, err := grpc.Dial("localhost:50053", grpc.WithInsecure()) // Adjust host/port as needed
+	productConn, err := grpc.Dial("localhost:50053", grpc.WithInsecure()) // Adjust host/port as needed
 	if err != nil {
 		log.Fatalf("Could not connect to product service: %v", err)
 	}
-	defer conn.Close()
-	productGrpcclient := productpb.NewProductServiceClient(conn)
+	defer productConn.Close()
+	productGrpcclient := productpb.NewProductServiceClient(productConn)
 
 	var productCl ports.ProductClient = client.NewProductClient(productGrpcclient)
 
-	svc := service.NewOrderSvc(db, productCl)
+	paymentConn, err := grpc.Dial("localhost:50056", grpc.WithInsecure()) // Adjust host/port as needed
+	if err != nil {
+		log.Fatalf("Could not connect to payment service: %v", err)
+	}
+	defer paymentConn.Close()
+	
+
+	var paymentCl ports.PaymentClient = client.NewPaymentClient(paymentConn)
+
+	svc := service.NewOrderSvc(db, productCl, paymentCl)
 	kafka.ConsumeOrderEvents(*svc)
 
 	// Create a done channel to signal when the shutdown is complete

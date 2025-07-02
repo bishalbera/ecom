@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package payment;
+
+option go_package = "github.com/ecom/packages/proto/payment";
+
+service PaymentService {
+  // Creates a payment intent with Stripe and returns a client secret
+  rpc CreatePaymentIntent(CreatePaymentIntentRequest) returns (CreatePaymentIntentResponse);
+}
+
+message CreatePaymentIntentRequest {
+  string orderId = 1;
+  double amount = 2;
+}
+
+message CreatePaymentIntentResponse {
+  string clientSecret = 1;
+}

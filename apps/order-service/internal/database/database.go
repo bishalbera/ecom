@@ -25,7 +25,7 @@ type Service interface {
 	Close() error
 	CreateOrder(order *model.Order) (*model.Order, error)
 	GetOrder(id string) (*model.Order, error)
-	GetAllOrders() ([]*model.Order, error)
+	GetAllOrders(userId string) ([]*model.Order, error)
 	UpdateOrderStatus(id string, status string) error
 }
 
@@ -75,9 +75,9 @@ func (s *service) UpdateOrderStatus(id string, status string) error {
 	return nil
 }
 
-func (s *service) GetAllOrders() ([]*model.Order, error) {
+func (s *service) GetAllOrders(userId string) ([]*model.Order, error) {
 	var orders []*model.Order
-	if err := s.db.Preload("Items").Find(&orders).Error; err != nil {
+	if err := s.db.Preload("Items").Where("user_id = ?", userId).Find(&orders).Error; err != nil {
 		return nil, err
 	}
 	return orders, nil

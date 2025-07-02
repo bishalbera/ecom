@@ -26,6 +26,12 @@ gen-product:
 	  --go_grpc_out=. \
 	  --proto_path=../../packages/proto/ \
 	  ../../packages/proto/product.proto
+gen-payment: 
+	@export PATH="$$PATH:$$GOPATH/bin:$$HOME/go/bin" && protoc \
+	  --go_out=. \
+	  --go_grpc_out=. \
+	  --proto_path=../../packages/proto/ \
+	  ../../packages/proto/payment.proto 
 # Create DB container
 docker-run:
 	@if docker compose up --build 2>/dev/null; then \

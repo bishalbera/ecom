@@ -6,12 +6,12 @@ import { PaymentService } from './payment.service';
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
   @Post('create')
-  async create(@Body() body: { orderId: string }) {
-    return this.paymentService.createPaymentIntent(body.orderId);
+  async create(@Body() body: { orderId: string; amount: number }) {
+    return this.paymentService.createPaymentIntent(body.orderId, body.amount);
   }
 
   @Post('webhook')
-  async webhook(@Req() req: Request, @Headers() headers: any) {
+  async webhook(@Req() req: Request & { rawBody: Buffer }, @Headers() headers: Record<string, string>) {
     console.log('Headers:', headers);
     const signature = headers['stripe-signature'];
 
@@ -19,7 +19,7 @@ export class PaymentController {
       throw new Error('Missing stripe-signature header');
     }
 
-    const payload = req.body;
+    const payload = req.rawBody;
     return this.paymentService.handleStripeWebhook(payload, signature);
   }
 }

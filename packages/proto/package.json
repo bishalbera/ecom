@@ -24,6 +24,10 @@
       "types": "./src/types/product.ts",
       "default": "./dist/types/product.js"
     },
+    "./src/types/payment": {
+      "types": "./src/types/payment.ts",
+      "default": "./dist/types/payment.js"
+    },
     "./src/types/order": {
       "types": "./src/types/order.ts",
       "default": "./dist/types/order.js"

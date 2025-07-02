@@ -31,7 +31,11 @@ type CreateOrderRequest struct {
 }
 
 func (s *FiberServer) GetAllOrdersHandler(c *fiber.Ctx) error {
-	orders, err := s.Service.GetAllOrders()
+	userId := c.Query("userId")
+	if userId == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "userId cannot be empty"})
+	}
+	orders, err := s.Service.GetAllOrders(userId)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 
@@ -61,11 +65,11 @@ func (s *FiberServer) CreateOrderHandler(c *fiber.Ctx) error {
 	if userId == "" {
 		return c.Status(400).JSON(fiber.StatusBadRequest)
 	}
-	order, err := s.Service.CreateOrder(userId, req.Items)
+	order, clientSecret, err := s.Service.CreateOrder(userId, req.Items)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.JSON(order)
+	return c.JSON(fiber.Map{"order": order, "clientSecret": clientSecret})
 }
 
 func (s *FiberServer) HelloWorldHandler(c *fiber.Ctx) error {

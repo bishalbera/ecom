@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc"
 
 	pb "order-service/github.com/ecom/packages/proto/product"
+	
 )
 
 type FiberServer struct {
@@ -20,15 +21,22 @@ type FiberServer struct {
 }
 
 func New() *FiberServer {
-	conn, err := grpc.Dial("localhost:50053", grpc.WithInsecure())
+	productConn, err := grpc.Dial("localhost:50053", grpc.WithInsecure())
 	if err != nil {
 		panic(err)
 	}
-	productGrpcClient := pb.NewProductServiceClient(conn)
+	productGrpcClient := pb.NewProductServiceClient(productConn)
 	var productCl ports.ProductClient = grpcclient.NewProductClient(productGrpcClient)
+
+	paymentConn, err := grpc.Dial("localhost:50054", grpc.WithInsecure())
+	if err != nil {
+		panic(err)
+	}
+	var paymentCl ports.PaymentClient = grpcclient.NewPaymentClient(paymentConn)
+
 	db := database.New()
 
-	orderSvc := service.NewOrderSvc(db, productCl)
+	orderSvc := service.NewOrderSvc(db, productCl, paymentCl)
 	server := &FiberServer{
 		App: fiber.New(fiber.Config{
 			ServerHeader: "order-service",

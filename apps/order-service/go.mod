@@ -6,6 +6,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.6
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
+	github.com/segmentio/kafka-go v0.4.48
 	google.golang.org/grpc v1.72.0
 	google.golang.org/protobuf v1.36.5
 	gorm.io/driver/postgres v1.5.11
@@ -27,7 +28,6 @@ require (
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/segmentio/kafka-go v0.4.48 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.62.0 // indirect

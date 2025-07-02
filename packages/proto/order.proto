@@ -9,7 +9,7 @@ service OrderService {
     rpc GetOrder(GetOrderReq) returns (OrderRes);
     rpc GetAllOrders (Empty )returns (AllOrderRes);
     rpc CreateOrder(CreateOrderReq) returns (OrderRes);
-
+    rpc UpdateOrderStatus(UpdateOrderStatusReq) returns (UpdateOrderStatusRes);
 }
 
 message GetOrderReq {
@@ -23,6 +23,7 @@ message OrderRes {
     repeated OrderItem items = 3;
     string orderStatus = 4;
     double total = 5;
+    string clientSecret = 6;
 }
 
 message AllOrderRes {
@@ -44,4 +45,13 @@ message OrderItem {
     string orderId = 3;
     int32 quantity = 4;
     double price = 5;
+}
+
+message UpdateOrderStatusReq {
+    string orderId = 1;
+    string status = 2;
+}
+
+message UpdateOrderStatusRes {
+    string message = 1;
 }

@@ -22,7 +22,7 @@ func NewGrpcServer(db database.Service) error {
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.UnaryInterceptor(UserIDInterceptor))
 	pb.RegisterCartServiceServer(s, &CartGrpcServer{db: db})
 	return s.Serve(lis)
 }
@@ -59,7 +59,11 @@ func (s *CartGrpcServer) AddItem(ctx context.Context, req *pb.AddItemReq) (*pb.A
 }
 
 func (s *CartGrpcServer) ClearCart(ctx context.Context, req *pb.ClearCartReq) (*pb.ClearCartRes, error) {
-	err := s.db.ClearCart(req.UserId)
+	user := ctx.Value("user").(string)
+	if user == "" {
+		return nil, status.Errorf(codes.Unauthenticated, "invaild user")
+	}
+	err := s.db.ClearCart(user)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "something went wrong:%v", err)
 	}

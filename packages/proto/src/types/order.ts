@@ -20,6 +20,7 @@ export interface OrderRes {
   items: OrderItem[];
   orderStatus: string;
   total: number;
+  clientSecret: string;
 }
 
 export interface AllOrderRes {
@@ -42,6 +43,15 @@ export interface OrderItem {
   price: number;
 }
 
+export interface UpdateOrderStatusReq {
+  orderId: string;
+  status: string;
+}
+
+export interface UpdateOrderStatusRes {
+  message: string;
+}
+
 export const ORDER_PACKAGE_NAME = "order";
 
 export interface OrderServiceClient {
@@ -50,6 +60,8 @@ export interface OrderServiceClient {
   getAllOrders(request: Empty): Observable<AllOrderRes>;
 
   createOrder(request: CreateOrderReq): Observable<OrderRes>;
+
+  updateOrderStatus(request: UpdateOrderStatusReq): Observable<UpdateOrderStatusRes>;
 }
 
 export interface OrderServiceController {
@@ -58,11 +70,15 @@ export interface OrderServiceController {
   getAllOrders(request: Empty): Promise<AllOrderRes> | Observable<AllOrderRes> | AllOrderRes;
 
   createOrder(request: CreateOrderReq): Promise<OrderRes> | Observable<OrderRes> | OrderRes;
+
+  updateOrderStatus(
+    request: UpdateOrderStatusReq,
+  ): Promise<UpdateOrderStatusRes> | Observable<UpdateOrderStatusRes> | UpdateOrderStatusRes;
 }
 
 export function OrderServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ["getOrder", "getAllOrders", "createOrder"];
+    const grpcMethods: string[] = ["getOrder", "getAllOrders", "createOrder", "updateOrderStatus"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod("OrderService", method)(constructor.prototype[method], method, descriptor);

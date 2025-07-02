@@ -2,9 +2,9 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ClientGrpc } from '@nestjs/microservices';
 import {
-  GetOrderReq,
   ORDER_SERVICE_NAME,
   OrderServiceClient,
+  UpdateOrderStatusReq,
 } from '@repo/proto/src/types/order';
 import { KafkaService } from 'src/kafka/kafka.service';
 import Stripe from 'stripe';
@@ -31,12 +31,12 @@ export class PaymentService {
       this.grpcClient.getService<OrderServiceClient>(ORDER_SERVICE_NAME);
   }
 
-  async createPaymentIntent(orderId: string) {
+  async createPaymentIntent(orderId: string, amount: number) {
     const order = await firstValueFrom(
-      this.orderService.getOrder({ id: orderId } as GetOrderReq),
+      this.orderService.getOrder({ id: orderId }),
     );
     const paymentIntent = await this.stripe.paymentIntents.create({
-      amount: Math.round(order.total * 100),
+      amount: Math.round(amount * 100),
       currency: 'usd',
       metadata: { orderId: order.id },
     });
@@ -48,9 +48,17 @@ export class PaymentService {
     if (!orderId) return;
 
     await this.kafkaService.send('order-events', {
-      type: 'ORDER_PAID',
-      orderId,
+      key: orderId,
+      value: { type: 'ORDER_PAID', orderId },
     });
+
+    // Call order service to update order status
+    await firstValueFrom(
+      this.orderService.updateOrderStatus({
+        orderId: orderId,
+        status: 'PAID',
+      } as UpdateOrderStatusReq),
+    );
   }
 
   async handleStripeWebhook(payload: Buffer, signature: string) {
@@ -64,12 +72,11 @@ export class PaymentService {
         signature,
         endpointSecret,
       );
-    } catch (err) {
+    } catch (err: any) {
       throw new Error(`Webhook Error: ${err.message}`);
     }
     if (event.type === 'payment_intent.succeeded') {
-      const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      const orderId = paymentIntent.metadata.orderId;
+      const paymentIntent = event.data.object;
 
       // Send kafka message to update order status
       await this.handleSuccessfulPayment(paymentIntent);

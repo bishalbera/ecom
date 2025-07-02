@@ -17,9 +17,10 @@ import {
   Cart,
   ClearCartRes,
 } from '@repo/proto/src/types/cart';
+import { GrpcUserInterceptor } from 'src/common/interceptors/grpc-user.interceptor';
 
 @Controller('cart')
-@UseInterceptors(GrpcLoggingInterceptor)
+@UseInterceptors(GrpcLoggingInterceptor, GrpcUserInterceptor)
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 
@@ -45,7 +46,7 @@ export class CartController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Delete(':userId')
+  @Delete(':userID')
   async ClearCart(@Param('userId') userId: string): Promise<ClearCartRes> {
     const res = await this.cartService.ClearCart(userId);
     return res;

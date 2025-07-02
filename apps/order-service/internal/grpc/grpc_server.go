@@ -23,22 +23,33 @@ func NewGrpcServer(svc *service.OrderService) error {
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.UnaryInterceptor(UserIDInterceptor))
 	pb.RegisterOrderServiceServer(s, &OrderGrpcServer{svc: svc})
 	return s.Serve(lis)
 
 }
 
 func (s *OrderGrpcServer) GetOrder(ctx context.Context, req *pb.GetOrderReq) (*pb.OrderRes, error) {
+	user := ctx.Value("user").(string)
+	if user == "" {
+		return nil, status.Errorf(codes.Unauthenticated, "invaild user")
+	}
 	order, err := s.svc.GetOrder(req.Id)
 	if err != nil {
 		return nil, err
+	}
+	if order.UserId != user {
+		return nil, status.Errorf(codes.PermissionDenied, "permission denied")
 	}
 	return mapToOrderRes(order), nil
 }
 
 func (s *OrderGrpcServer) GetAllOrders(ctx context.Context, _ *pb.Empty) (*pb.AllOrderRes, error) {
-	orders, err := s.svc.GetAllOrders()
+	user := ctx.Value("user").(string)
+	if user == "" {
+		return nil, status.Errorf(codes.Unauthenticated, "invaild user")
+	}
+	orders, err := s.svc.GetAllOrders(user)
 	if err != nil {
 		return nil, err
 	}
@@ -51,8 +62,9 @@ func (s *OrderGrpcServer) GetAllOrders(ctx context.Context, _ *pb.Empty) (*pb.Al
 }
 
 func (s *OrderGrpcServer) CreateOrder(ctx context.Context, req *pb.CreateOrderReq) (*pb.OrderRes, error) {
-	if req.UserId == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "invaild input")
+	user := ctx.Value("user").(string)
+	if user == "" {
+		return nil, status.Errorf(codes.Unauthenticated, "invaild user")
 	}
 
 	var items []model.OrderItems
@@ -66,11 +78,21 @@ func (s *OrderGrpcServer) CreateOrder(ctx context.Context, req *pb.CreateOrderRe
 			Price:     item.Price,
 		})
 	}
-	order, err := s.svc.CreateOrder(req.UserId, items)
+	order, clientSecret, err := s.svc.CreateOrder(user, items)
 	if err != nil {
 		return nil, err
 	}
-	return mapToOrderRes(order), nil
+	orderRes := mapToOrderRes(order)
+	orderRes.ClientSecret = clientSecret
+	return orderRes, nil
+}
+
+func (s *OrderGrpcServer) UpdateOrderStatus(ctx context.Context, req *pb.UpdateOrderStatusReq) (*pb.UpdateOrderStatusRes, error) {
+	err := s.svc.UpdateOrderStatus(req.OrderId, req.Status)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.UpdateOrderStatusRes{Message: "Order status updated successfully"}, nil
 }
 
 // -----Helper mapper -----
