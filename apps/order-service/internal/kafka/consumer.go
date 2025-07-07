@@ -3,7 +3,7 @@ package kafka
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"order-service/internal/service"
 
 	"github.com/segmentio/kafka-go"
@@ -14,7 +14,7 @@ type OrderEvent struct {
 	OrderId   string `json:"orderId"`
 }
 
-func ConsumeOrderEvents(orderService service.OrderService) {
+func ConsumeOrderEvents(orderService service.OrderService, logger *slog.Logger) {
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers: []string{"localhost:9092"},
 		Topic:   "order-events",
@@ -26,21 +26,21 @@ func ConsumeOrderEvents(orderService service.OrderService) {
 		for {
 			m, err := r.ReadMessage(context.Background())
 			if err != nil {
-				log.Println("Error reading kafka message:", err)
+				logger.Error("Error reading kafka message", "error", err)
 				continue
 			}
 			var event OrderEvent
 			if err := json.Unmarshal(m.Value, &event); err != nil {
-				log.Println("Error unmarshalling event", err)
+				logger.Error("Error unmarshalling event", "error", err)
 				continue
 			}
 			if event.EventType == "ORDER_PAID" {
 				err := orderService.UpdateOrderStatus(event.OrderId, "PAID")
 				if err != nil {
-					log.Println("Failed to update order status:", err)
+					logger.Error("Failed to update order status", "error", err)
 
 				} else {
-					log.Printf("Order %s marked as PAID\n", event.OrderId)
+					logger.Info("Order marked as PAID", "orderId", event.OrderId)
 				}
 			}
 

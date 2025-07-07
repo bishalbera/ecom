@@ -7,22 +7,29 @@ import { PrismaService } from 'prisma/prisma.service';
 import { CreateUserDto } from '@repo/shared-dtos/src/dtos/create-user.dto';
 import { LoginDto } from '@repo/shared-dtos/src/dtos/login.dto';
 import { RpcException } from '@nestjs/microservices';
-import { status } from '@grpc/grpc-js'; // ✅ Import gRPC status codes
+import { status } from '@grpc/grpc-js'; 
+import { Logger } from 'nestjs-pino';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
+    private readonly logger: Logger,
   ) {}
 
   async createUser(createUserDto: CreateUserDto) {
+    this.logger.log({ createUserDto }, 'Creating user');
     try {
       const userExist = await this.prisma.user.findUnique({
         where: { email: createUserDto.email },
       });
 
       if (userExist) {
+        this.logger.error(
+          { email: createUserDto.email },
+          'Email already registered',
+        );
         throw new RpcException({
           code: status.ALREADY_EXISTS, // ✅ Use correct gRPC status (409 Conflict)
           message: 'Email is already registered',
@@ -33,37 +40,51 @@ export class AuthService {
       createUserDto.password = await bcrypt.hash(createUserDto.password, salt);
       const user = await this.prisma.user.create({ data: createUserDto });
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = user;
+      this.logger.log({ result }, 'User created successfully');
       return result;
-    } catch (error) {
+    } catch (error: any) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      this.logger.error({ error }, 'Error creating user');
       throw error;
     }
   }
 
   async findUser(email: string) {
+    this.logger.log({ email }, 'Finding user');
     try {
       const user = await this.prisma.user.findUnique({
         where: { email },
       });
 
       if (!user) {
+        this.logger.error({ email }, 'User not found');
         throw new RpcException({
           code: status.NOT_FOUND, // ✅ Use NOT_FOUND (404)
           message: `User with email ${email} does not exist`,
         });
       }
 
+      this.logger.log({ user }, 'User found');
       return user;
-    } catch (error) {
+    } catch (error: any) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      this.logger.error({ error }, 'Error finding user');
       throw error;
     }
   }
 
   async login(authInput: LoginDto) {
+    this.logger.log({ authInput }, 'Logging in user');
     try {
       const user = await this.validateUser(authInput);
-      return this.signPayload(user);
-    } catch (error) {
+      const result = this.signPayload(user);
+      this.logger.log({ result }, 'User logged in successfully');
+      return result;
+    } catch (error: any) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      this.logger.error({ error }, 'Error logging in user');
       throw error;
     }
   }
@@ -92,11 +113,12 @@ export class AuthService {
       });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...result } = user;
     return result;
   }
 
-  async signPayload(user: SignInData): Promise<AuthResult> {
+  signPayload(user: SignInData): AuthResult {
     const payload = { sub: user.id, email: user.email, name: user.name };
     const accessToken = this.jwtService.sign(payload);
     return {

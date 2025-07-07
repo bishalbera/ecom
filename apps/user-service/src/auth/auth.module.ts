@@ -11,7 +11,7 @@ import { PrismaService } from 'prisma/prisma.service';
   imports: [
     PassportModule,
     JwtModule.registerAsync({
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         secret: configService.getOrThrow('jwt_secret'),
         signOptions: { expiresIn: '1d' },
       }),

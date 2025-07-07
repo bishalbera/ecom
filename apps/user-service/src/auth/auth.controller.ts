@@ -11,20 +11,27 @@ import {
   UserServiceControllerMethods,
 } from '@repo/proto/src/types/user';
 import { Observable } from 'rxjs';
+import { Logger } from 'nestjs-pino';
+
 @Controller()
 @UserServiceControllerMethods()
 export class AuthController implements UserServiceController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly logger: Logger,
+  ) {}
 
   createUser(
     request: CreateUserRequest,
   ): Promise<User> | Observable<User> | User {
+    this.logger.log({ request }, 'Creating user');
     return this.authService.createUser(request);
   }
 
   login(
     request: LoginRequest,
   ): Promise<LoginResult> | Observable<LoginResult> | LoginResult {
+    this.logger.log({ request }, 'Logging in user');
     return this.authService.login(request);
   }
 
@@ -34,6 +41,7 @@ export class AuthController implements UserServiceController {
     | Promise<FindUserResponse>
     | Observable<FindUserResponse>
     | FindUserResponse {
+    this.logger.log({ request }, 'Finding user');
     return this.authService.findUser(request.email);
   }
 }

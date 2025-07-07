@@ -3,7 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"order-service/internal/model"
 	"os"
 	"strconv"
@@ -30,7 +30,8 @@ type Service interface {
 }
 
 type service struct {
-	db *gorm.DB
+	db     *gorm.DB
+	logger *slog.Logger
 }
 
 var (
@@ -43,7 +44,7 @@ var (
 	dbInstance *service
 )
 
-func New() Service {
+func New(logger *slog.Logger) Service {
 	// Reuse Connection
 	if dbInstance != nil {
 		return dbInstance
@@ -54,15 +55,18 @@ func New() Service {
 	if err != nil {
 		// This will not be a connection error, but a DSN parse error or
 		// another initialization error.
-		log.Fatal(err)
+		logger.Error("failed to open database connection", "error", err)
+		os.Exit(1)
 	}
 
 	if err := db.AutoMigrate(&model.Order{}, &model.OrderItems{}); err != nil {
-		log.Fatalf("failed to migrate database: %v", err)
+		logger.Error("failed to migrate database", "error", err)
+		os.Exit(1)
 	}
 
 	dbInstance = &service{
-		db: db,
+		db:     db,
+		logger: logger,
 	}
 	return dbInstance
 }
@@ -70,6 +74,7 @@ func New() Service {
 func (s *service) UpdateOrderStatus(id string, status string) error {
 	var order model.Order
 	if err := s.db.Model(&order).Where("id = ?", id).Update("orderStatus", status).Error; err != nil {
+		s.logger.Error("failed to update order status", "error", err)
 		return err
 	}
 	return nil
@@ -78,6 +83,7 @@ func (s *service) UpdateOrderStatus(id string, status string) error {
 func (s *service) GetAllOrders(userId string) ([]*model.Order, error) {
 	var orders []*model.Order
 	if err := s.db.Preload("Items").Where("user_id = ?", userId).Find(&orders).Error; err != nil {
+		s.logger.Error("failed to get all orders", "error", err)
 		return nil, err
 	}
 	return orders, nil
@@ -86,6 +92,7 @@ func (s *service) GetAllOrders(userId string) ([]*model.Order, error) {
 func (s *service) GetOrder(id string) (*model.Order, error) {
 	var order model.Order
 	if err := s.db.Preload("Items").First(&order, "id = ?", id).Error; err != nil {
+		s.logger.Error("failed to get order", "error", err)
 		return nil, err
 	}
 	return &order, nil
@@ -94,6 +101,7 @@ func (s *service) GetOrder(id string) (*model.Order, error) {
 func (s *service) CreateOrder(order *model.Order) (*model.Order, error) {
 
 	if err := s.db.Create(order).Error; err != nil {
+		s.logger.Error("failed to create order", "error", err)
 		return nil, err
 
 	}
@@ -116,7 +124,7 @@ func (s *service) Health() map[string]string {
 	if err != nil {
 		stats["status"] = "down"
 		stats["error"] = fmt.Sprintf("db down: %v", err)
-		log.Fatalf("db down: %v", err) // Log the error and terminate the program
+		s.logger.Error("db down", "error", err) // Log the error and terminate the program
 		return stats
 	}
 
@@ -160,8 +168,9 @@ func (s *service) Health() map[string]string {
 func (s *service) Close() error {
 	sqlDB, err := s.db.DB()
 	if err != nil {
+		s.logger.Error("failed to retrieve sql.DB for closing", "error", err)
 		return fmt.Errorf("failed to retrieve sql.DB for closing: %w", err)
 	}
-	log.Printf("Disconnected from database: %s", database)
+	s.logger.Info("Disconnected from database", "database", database)
 	return sqlDB.Close()
 }
