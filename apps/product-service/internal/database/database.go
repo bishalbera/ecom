@@ -3,7 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
-	"log"
+	"product-service/internal/log"
 	"os"
 	"product-service/internal/models"
 	"strconv"
@@ -53,10 +53,10 @@ func New() Service {
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&search_path=%s", username, password, host, port, database, schema)
 	db, err := gorm.Open(postgres.Open(connStr), &gorm.Config{})
 	if err != nil {
-		log.Fatal(err)
+		log.Logger.Error("db connection error","error",err)
 	}
 	if err := db.AutoMigrate(&models.Products{}); err != nil {
-		log.Fatalf("failed to migrate database: %v", err)
+		log.Logger.Error("failed to migrate database: %v", "error",err)
 	}
 	dbInstance = &service{
 		db: db,
@@ -137,7 +137,7 @@ func (s *service) Health() map[string]string {
 	if err != nil {
 		stats["status"] = "down"
 		stats["error"] = fmt.Sprintf("db down: %v", err)
-		log.Fatalf("db down: %v", err) // Log the error and terminate the program
+		log.Logger.Error("db down: %v", err) // Log the error and terminate the program
 		return stats
 	}
 	// Ping the database
@@ -145,7 +145,7 @@ func (s *service) Health() map[string]string {
 	if err != nil {
 		stats["status"] = "down"
 		stats["error"] = fmt.Sprintf("db down: %v", err)
-		log.Printf("db down: %v", err)
+		log.Logger.Error("db down: %v", err)
 		return stats
 	}
 	// Database is up, add more statistics
@@ -191,6 +191,6 @@ func (s *service) Close() error {
 	if err != nil {
 		return fmt.Errorf("failed  to retrieve sql.DB for closing: %w", err)
 	}
-	log.Printf("Disconnected from database: %s", database)
+	log.Logger.Info("Disconnected from database: %s", database)
 	return sqlDB.Close()
 }

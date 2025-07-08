@@ -16,6 +16,7 @@ import { CartService } from './cart/cart.service';
 import { ORDER_SERVICE_NAME } from '@repo/proto/src/types/order';
 import { OrderController } from './order/order.controller';
 import { OrderService } from './order/order.service';
+import { LoggerModule } from 'nestjs-pino';
 
 @Module({
   imports: [
@@ -23,6 +24,16 @@ import { OrderService } from './order/order.service';
       isGlobal: true,
       envFilePath: ['.env', '.env.development'],
       load: [configuration],
+    }),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        transport: {
+          target: 'pino-pretty',
+          options: {
+            singleLine: true,
+          },
+        },
+      },
     }),
     ClientsModule.registerAsync([
       {

@@ -2,10 +2,10 @@ package grpc_server
 
 import (
 	"context"
-	"log"
 	"net"
 	pb "product-service/github.com/ecom/packages/proto/product"
 	"product-service/internal/database"
+	"product-service/internal/log"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -20,7 +20,7 @@ type productServer struct {
 func NewGrpcServer(db database.Service) error {
 	lis, err := net.Listen("tcp", ":50053")
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		log.Logger.Error("Failed to listen: %v","error", err)
 	}
 	s := grpc.NewServer()
 	pb.RegisterProductServiceServer(s, &productServer{db: db})

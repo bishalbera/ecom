@@ -1,11 +1,11 @@
 package database
 
 import (
+	"cart-service/internal/log"
 	"cart-service/internal/model"
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math"
 	"os"
 	"strconv"
@@ -37,7 +37,7 @@ var (
 func New() Service {
 	num, err := strconv.Atoi(database)
 	if err != nil {
-		log.Fatalf("database incorrect %v", err)
+		log.Logger.Error("database incorrect", "error", err)
 	}
 
 	fullAddress := fmt.Sprintf("%s:%s", address, port)
@@ -64,6 +64,7 @@ func (s *service) GetCart(userId string) (*model.Cart, error) {
 	if err == redis.Nil {
 		return &model.Cart{UserId: userId, Items: []model.CartItems{}}, nil
 	} else if err != nil {
+		log.Logger.Error("failed to get cart", "error", err)
 		return nil, err
 
 	}
@@ -84,6 +85,8 @@ func (s *service) AddItem(userId string, productId string, quantity int32) error
 	}
 	cart, err := s.GetCart(userId)
 	if err != nil {
+
+		log.Logger.Error("failed to get cart", "error", err)
 		return err
 	}
 
@@ -131,7 +134,7 @@ func (s *service) checkRedisHealth(ctx context.Context, stats map[string]string)
 	// Note: By extracting and simplifying like this, `log.Fatalf("db down: %v", err)`
 	// can be changed into a standard error instead of a fatal error.
 	if err != nil {
-		log.Fatalf("db down: %v", err)
+		log.Logger.Error("db down", "error", err)
 	}
 
 	// Redis is up

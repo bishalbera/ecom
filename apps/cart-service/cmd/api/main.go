@@ -4,9 +4,9 @@ import (
 	"cart-service/internal/database"
 	grpcserver "cart-service/internal/grpc_server"
 	"cart-service/internal/http_server"
+	"cart-service/internal/log"
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"strconv"
@@ -24,7 +24,7 @@ func gracefulShutdown(fiberServer *http_server.FiberServer, done chan bool) {
 	// Listen for the interrupt signal.
 	<-ctx.Done()
 
-	log.Println("shutting down gracefully, press Ctrl+C again to force")
+	log.Logger.Info("shutting down gracefully, press Ctrl+C again to force")
 	stop() // Allow Ctrl+C to force shutdown
 
 	// The context is used to inform the server it has 5 seconds to finish
@@ -32,16 +32,18 @@ func gracefulShutdown(fiberServer *http_server.FiberServer, done chan bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := fiberServer.ShutdownWithContext(ctx); err != nil {
-		log.Printf("Server forced to shutdown with error: %v", err)
+		log.Logger.Error("Server forced to shutdown with error", "error", err)
 	}
 
-	log.Println("Server exiting")
+	log.Logger.Info("Server exiting")
 
 	// Notify the main goroutine that the shutdown is complete
 	done <- true
 }
 
 func main() {
+
+	log.New()
 
 	db := database.New()
 	server := http_server.New()
@@ -55,14 +57,14 @@ func main() {
 		port, _ := strconv.Atoi(os.Getenv("PORT"))
 		err := server.Listen(fmt.Sprintf(":%d", port))
 		if err != nil {
-			panic(fmt.Sprintf("http server error: %s", err))
+			log.Logger.Error("http server error", "error", err)
 		}
 	}()
 
 	go func() {
-		log.Println("Starting GRPC server on :50054")
+		log.Logger.Info("Starting GRPC server on :50054")
 		if err := grpcserver.NewGrpcServer(db); err != nil {
-			log.Fatalf("grpc server error %v", err)
+			log.Logger.Error("grpc server error", "error", err)
 		}
 	}()
 
@@ -71,5 +73,5 @@ func main() {
 
 	// Wait for the graceful shutdown to complete
 	<-done
-	log.Println("Graceful shutdown complete.")
+	log.Logger.Info("Graceful shutdown complete.")
 }

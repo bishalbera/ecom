@@ -5,9 +5,11 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { Observable, tap } from 'rxjs';
+import { Logger } from 'nestjs-pino';
 
 @Injectable()
 export class GrpcLoggingInterceptor implements NestInterceptor {
+  constructor(private readonly logger: Logger) {}
   intercept(
     context: ExecutionContext,
     next: CallHandler<any>,
@@ -19,10 +21,10 @@ export class GrpcLoggingInterceptor implements NestInterceptor {
     return next.handle().pipe(
       tap((data) => {
         const duration = Date.now() - startTime;
-        console.log(
+        this.logger.log(
           `✅ [gRPC] Response: ${method} | Time Taken: ${duration}ms`,
         );
-        console.log(`🔹 Data:`, data);
+        this.logger.log(`🔹 Data:`, data);
       }),
     );
   }

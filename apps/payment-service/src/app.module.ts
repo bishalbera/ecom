@@ -8,10 +8,21 @@ import { ORDER_SERVICE_NAME } from '@repo/proto/src/types/order';
 import { join } from 'path';
 import { PAYMENT_SERVICE_NAME } from '@repo/proto/src/types/payment';
 import { KafkaService } from './kafka/kafka.service';
+import { LoggerModule } from 'nestjs-pino';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        transport: {
+          target: 'pino-pretty',
+          options: {
+            singleLine: true,
+          },
+        },
+      },
+    }),
     ClientsModule.register([
       {
         name: ORDER_SERVICE_NAME,

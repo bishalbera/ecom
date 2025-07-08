@@ -9,6 +9,7 @@ import {
 import { KafkaService } from 'src/kafka/kafka.service';
 import Stripe from 'stripe';
 import { firstValueFrom } from 'rxjs';
+import { Logger } from 'nestjs-pino';
 
 @Injectable()
 export class PaymentService {
@@ -19,6 +20,7 @@ export class PaymentService {
     @Inject(ORDER_SERVICE_NAME) private readonly grpcClient: ClientGrpc,
     private readonly configService: ConfigService,
     private readonly kafkaService: KafkaService,
+    private readonly logger: Logger,
   ) {
     this.stripe = new Stripe(
       this.configService.getOrThrow<string>('STRIPE_SECRET_KEY'),
@@ -32,6 +34,9 @@ export class PaymentService {
   }
 
   async createPaymentIntent(orderId: string, amount: number) {
+    this.logger.log(
+      `Creating payment intent for order ${orderId} with amount ${amount}`,
+    );
     const order = await firstValueFrom(
       this.orderService.getOrder({ id: orderId }),
     );
@@ -46,6 +51,8 @@ export class PaymentService {
   async handleSuccessfulPayment(event: Stripe.PaymentIntent) {
     const orderId = event.metadata?.orderId;
     if (!orderId) return;
+
+    this.logger.log(`Handling successful payment for order ${orderId}`);
 
     await this.kafkaService.send('order-events', {
       key: orderId,
@@ -73,6 +80,7 @@ export class PaymentService {
         endpointSecret,
       );
     } catch (err: any) {
+      this.logger.error(`Webhook Error: ${err.message}`);
       throw new Error(`Webhook Error: ${err.message}`);
     }
     if (event.type === 'payment_intent.succeeded') {

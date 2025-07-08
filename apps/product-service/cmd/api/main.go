@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"product-service/internal/database"
 	"product-service/internal/grpc_server"
 	"product-service/internal/http_server"
+	"product-service/internal/log"
 	"strconv"
 	"syscall"
 	"time"
@@ -24,7 +24,7 @@ func gracefulShutdown(server *http_server.Server, done chan bool) {
 	// Listen for the interrupt signal.
 	<-ctx.Done()
 
-	log.Println("shutting down gracefully, press Ctrl+C again to force")
+	log.Logger.Info("shutting down gracefully, press Ctrl+C again to force")
 	stop() // Allow Ctrl+C to force shutdown
 
 	// The context is used to inform the server it has 5 seconds to finish
@@ -32,10 +32,10 @@ func gracefulShutdown(server *http_server.Server, done chan bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := server.ShutdownWithContext(ctx); err != nil {
-		log.Printf("Server forced to shutdown with error: %v", err)
+		log.Logger.Error("Server forced to shutdown with error: %v", "error", err)
 	}
 
-	log.Println("Server exiting")
+	log.Logger.Info("Server exiting")
 
 	// Notify the main goroutine that the shutdown is complete
 	done <- true
@@ -61,9 +61,9 @@ func main() {
 	// Create and start grpc server
 	go func() {
 
-		log.Println("Starting grpc server on port 50053...")
+		log.Logger.Info("Starting grpc server on port 50053...")
 		if err := grpc_server.NewGrpcServer(db); err != nil {
-			log.Fatalf("grpc server error: %v", err)
+			log.Logger.Error("grpc server error: %v", "error", err)
 		}
 	}()
 	// Run graceful shutdown in a separate goroutine
@@ -71,5 +71,5 @@ func main() {
 
 	// Wait for the graceful shutdown to complete
 	<-done
-	log.Println("Graceful shutdown complete.")
+	log.Logger.Info("Graceful shutdown complete.")
 }

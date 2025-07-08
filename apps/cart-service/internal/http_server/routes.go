@@ -1,6 +1,7 @@
 package http_server
 
 import (
+	"cart-service/internal/log"
 	"cart-service/internal/model"
 
 	"github.com/gofiber/fiber/v2"
@@ -30,7 +31,8 @@ func (s *FiberServer) GetCartHandler(c *fiber.Ctx) error {
 	userId := c.Params("userId")
 	cart, err := s.db.GetCart(userId)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		log.Logger.Error("failed to get cart", "error", err)
+		return c.Status(500).JSON(fiber.Map{"error": "failed to get cart"})
 	}
 	return c.JSON(cart)
 }
@@ -39,11 +41,13 @@ func (s *FiberServer) AddItemHandler(c *fiber.Ctx) error {
 	userId := c.Params("userId")
 	var item model.CartItems
 	if err := c.BodyParser(&item); err != nil {
+		log.Logger.Error("invalid input", "error", err)
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid input"})
 	}
 	err := s.db.AddItem(userId, item.ProductId, int32(item.Quantity))
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		log.Logger.Error("failed to add item", "error", err)
+		return c.Status(500).JSON(fiber.Map{"error": "failed to add item"})
 	}
 	return c.JSON(fiber.Map{"status": "item added"})
 }
@@ -52,7 +56,8 @@ func (s *FiberServer) ClearCartHandler(c *fiber.Ctx) error {
 	userId := c.Params("userId")
 	err := s.db.ClearCart(userId)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		log.Logger.Error("failed to clear cart", "error", err)
+		return c.Status(500).JSON(fiber.Map{"error": "failed to clear cart"})
 	}
 	return c.JSON(fiber.Map{"status": "cart cleared"})
 }
