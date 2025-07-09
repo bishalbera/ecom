@@ -1,4 +1,3 @@
-
 name: CI - Build and Push Docker Images
 
 on:
@@ -69,6 +68,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      has-changes: ${{ steps.set-matrix.outputs.has-changes }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -108,17 +108,23 @@ jobs:
           # Extract only changed services with a "build" task and no cache hit
           AFFECTED_SERVICES=$(echo "$TURBO_OUTPUT" | jq -r '[.packages[] | select(.cache.status != "hit" and .task == "build") | .displayName | split("#")[0] | split("/")[-1]]')
 
-          # Fallback to empty array if no services found
+          # Fallback to empty array if no services found or if result is null
           if [ "$AFFECTED_SERVICES" = "null" ] || [ -z "$AFFECTED_SERVICES" ]; then
             AFFECTED_SERVICES="[]"
           fi
 
           echo "Affected services that need to be built: $AFFECTED_SERVICES"
 
-          MATRIX_JSON=$(jq -c --argjson services "$AFFECTED_SERVICES" '{service: $services}')
-          echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
-
-
+          # Check if we have any services to build
+          SERVICE_COUNT=$(echo "$AFFECTED_SERVICES" | jq '. | length')
+          if [ "$SERVICE_COUNT" -eq 0 ]; then
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+            echo "matrix={\"service\":[]}" >> $GITHUB_OUTPUT
+          else
+            echo "has-changes=true" >> $GITHUB_OUTPUT
+            MATRIX_JSON=$(jq -c --argjson services "$AFFECTED_SERVICES" '{service: $services}')
+            echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
+          fi
 
   # ==================================================================
   # Job 3: Build and Push Docker images for CHANGED services
@@ -127,7 +133,8 @@ jobs:
   build-and-push-images:
     name: Build and Push Docker Images
     needs: determine-changes
-    if: needs.determine-changes.outputs.matrix != '{"service":[]}' # Don't run if the matrix is empty
+    # Only run if there are changes to build
+    if: needs.determine-changes.outputs.has-changes == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
