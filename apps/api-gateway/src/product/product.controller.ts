@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+
 import {
   Controller,
   Get,
@@ -11,6 +13,42 @@ import { GrpcLoggingInterceptor } from 'src/grpc-logging.interceptor';
 import { ProductService } from './product.service';
 import { JwtAuthGuard } from 'src/auth/jwt.guard';
 import { Product, SearchReq } from '@repo/proto/src/types/product';
+import { IsOptional, IsString, IsNumberString } from 'class-validator';
+import { Type } from 'class-transformer'; // Added import
+
+class SearchQueryDto {
+  @IsString()
+  @IsOptional()
+  query?: string;
+
+  @IsString()
+  @IsOptional()
+  category?: string;
+
+  @IsNumberString()
+  @IsOptional()
+  @Type(() => Number) // Added decorator
+  minPrice?: number; // Changed type to number
+
+  @IsNumberString()
+  @IsOptional()
+  @Type(() => Number) // Added decorator
+  maxPrice?: number; // Changed type to number
+
+  @IsString()
+  @IsOptional()
+  sort?: string;
+
+  @IsNumberString()
+  @IsOptional()
+  @Type(() => Number) // Added decorator
+  limit?: number; // Changed type to number
+
+  @IsNumberString()
+  @IsOptional()
+  @Type(() => Number) // Added decorator
+  page?: number; // Changed type to number
+}
 
 @Controller('products')
 @UseInterceptors(GrpcLoggingInterceptor)
@@ -19,19 +57,19 @@ export class ProductController {
 
   @UseGuards(JwtAuthGuard)
   @Get('search')
-  async searchProducts(@Query('query') query: any) {
-    if (!query || query.trim() === '') {
-      return NotFoundException;
+  async searchProducts(@Query() query: SearchQueryDto) {
+    if (!query.query || query.query.trim() === '') {
+      throw new NotFoundException('Query parameter is required');
     }
 
     const searchReq: SearchReq = {
       query: query.query || '',
       category: query.category || '',
-      minPrice: parseFloat(query.minPrice) || 0,
-      maxPrice: parseFloat(query.maxPrice) || 0,
+      minPrice: query.minPrice || 0, // Removed parseFloat
+      maxPrice: query.maxPrice || 0, // Removed parseFloat
       sort: query.sort || '',
-      limit: parseInt(query.limit) || 10,
-      page: parseInt(query.page) || 1,
+      limit: query.limit || 10, // Removed parseInt
+      page: query.page || 1, // Removed parseInt
     };
 
     const res = await this.productService.SearchProducts(searchReq);

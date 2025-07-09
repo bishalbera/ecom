@@ -37,7 +37,7 @@ export class CartService implements OnModuleInit {
   }
 
   async ClearCart(userId: string): Promise<ClearCartRes> {
-    const res = await firstValueFrom(this.cartService.clearCart({userId}));
+    const res = await firstValueFrom(this.cartService.clearCart({ userId }));
     return {
       msg: res.msg,
     };

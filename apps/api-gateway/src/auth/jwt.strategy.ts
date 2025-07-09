@@ -1,20 +1,20 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Strategy } from 'passport-jwt';
 import { Request } from 'express';
+
+interface JwtPayload {
+  sub: string;
+  name: string;
+  email: string;
+}
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(configService: ConfigService) {
-    interface JwtFromRequest {
-      (req: Request): string;
-    }
-
-    const jwtFromRequest: JwtFromRequest = (req) => {
-      const authHeader: string | undefined = req.headers['authorization'] as
-        | string
-        | undefined;
+    const jwtFromRequest = (req: Request): string => {
+      const authHeader: string | undefined = req.headers['authorization'];
       console.log(authHeader);
       if (!authHeader) {
         throw new UnauthorizedException('Authorization header not found');
@@ -34,7 +34,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any) {
+  validate(payload: JwtPayload) {
     if (!payload) {
       throw new UnauthorizedException();
     }

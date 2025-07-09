@@ -15,8 +15,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const logger = app.get(Logger);
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const grpcPort = configService.getOrThrow('user_service_grpc_port');
+  const grpcPort = configService.getOrThrow<string>('user_service_grpc_port');
   const protoPath = join(__dirname, '../../../../packages/proto/user.proto');
 
   logger.log('User Service: Starting gRPC server...');
@@ -35,15 +34,20 @@ async function bootstrap() {
   });
 
   try {
-    void (await app.startAllMicroservices());
+    await app.startAllMicroservices();
     logger.log(`User Service: gRPC server is running on port ${grpcPort}`);
 
     // await app.listen(port);
     // logger.log(`User Service: HTTP server is running on port ${port}`);
-  } catch (error: any) {
-    logger.error({ err: error }, 'User Service: Failed to start');
+  } catch (error) {
+    logger.error(error, 'User Service: Failed to start');
     process.exit(1);
   }
 }
 
-bootstrap();
+bootstrap().catch((err) => {
+  // Using console.error here because the logger might not be available
+  // if the bootstrap function fails early.
+  console.error('Unhandled error during bootstrap', err);
+  process.exit(1);
+});

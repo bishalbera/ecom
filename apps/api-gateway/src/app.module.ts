@@ -102,8 +102,19 @@ import { LoggerModule } from 'nestjs-pino';
       },
     ]),
   ],
-  controllers: [UserController, ProductController, CartController, OrderController],
-  providers: [UserService, JwtStrategy, ProductService, CartService, OrderService],
+  controllers: [
+    UserController,
+    ProductController,
+    CartController,
+    OrderController,
+  ],
+  providers: [
+    UserService,
+    JwtStrategy,
+    ProductService,
+    CartService,
+    OrderService,
+  ],
   exports: [],
 })
 export class AppModule {}

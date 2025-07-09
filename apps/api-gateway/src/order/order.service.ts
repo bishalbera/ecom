@@ -1,4 +1,4 @@
-import { Inject, Injectable, OnModuleInit, Scope } from '@nestjs/common';
+import { Inject, Injectable, Scope } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
 import { REQUEST } from '@nestjs/core';
 import {
@@ -12,6 +12,17 @@ import {
 } from '@repo/proto/src/types/order';
 import { firstValueFrom } from 'rxjs';
 import { Metadata } from '@grpc/grpc-js';
+import { Request } from 'express';
+
+interface User {
+  id: string;
+  userId: string;
+  sub: string;
+}
+
+interface RequestWithUser extends Request {
+  user: User;
+}
 
 @Injectable({ scope: Scope.REQUEST })
 export class OrderService {
@@ -19,7 +30,7 @@ export class OrderService {
 
   constructor(
     @Inject(ORDER_SERVICE_NAME) private readonly client: ClientGrpc,
-    @Inject(REQUEST) private readonly request: any,
+    @Inject(REQUEST) private readonly request: RequestWithUser,
   ) {
     this.orderSerivice =
       this.client.getService<OrderServiceClient>(ORDER_SERVICE_NAME);
@@ -29,14 +40,11 @@ export class OrderService {
     const metadata = new Metadata();
     const user = this.request.user;
     if (user) {
-      metadata.add(
-        'user',
-        user.id || user.userId || user.sub || JSON.stringify(user),
-      );
+      metadata.add('user', user.id || user.userId || user.sub);
     }
     console.log('Metadata being sent to Order Service:', metadata.getMap());
     const order: OrderRes = await firstValueFrom(
-      (this.orderSerivice as any).createOrder(req, metadata),
+      this.orderSerivice.createOrder(req, metadata),
     );
     return {
       id: order.id,
@@ -52,14 +60,11 @@ export class OrderService {
     const metadata = new Metadata();
     const user = this.request.user;
     if (user) {
-      metadata.add(
-        'user',
-        user.id || user.userId || user.sub || JSON.stringify(user),
-      );
+      metadata.add('user', user.id || user.userId || user.sub);
     }
     console.log('Metadata being sent to Order Service:', metadata.getMap());
     const order: OrderRes = await firstValueFrom(
-      (this.orderSerivice as any).getOrder(req, metadata),
+      this.orderSerivice.getOrder(req, metadata),
     );
     return {
       id: order.id,
@@ -75,14 +80,11 @@ export class OrderService {
     const metadata = new Metadata();
     const user = this.request.user;
     if (user) {
-      metadata.add(
-        'user',
-        user.id || user.userId || user.sub || JSON.stringify(user),
-      );
+      metadata.add('user', user.id || user.userId || user.sub);
     }
     console.log('Metadata being sent to Order Service:', metadata.getMap());
     const orders: AllOrderRes = await firstValueFrom(
-      (this.orderSerivice as any).getAllOrders(req, metadata),
+      this.orderSerivice.getAllOrders(req, metadata),
     );
     return {
       orders: orders.orders.map((order) => ({

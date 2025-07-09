@@ -1,4 +1,3 @@
-
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { PaymentService } from '../payment/payment.service';
@@ -17,7 +16,10 @@ export class PaymentGrpcController {
     data: CreatePaymentIntentRequest,
   ): Promise<CreatePaymentIntentResponse> {
     const { orderId, amount } = data;
-    const result = await this.paymentService.createPaymentIntent(orderId, amount);
+    const result = await this.paymentService.createPaymentIntent(
+      orderId,
+      amount,
+    );
     if (!result.clientSecret) {
       throw new Error('Failed to create payment intent: clientSecret is null');
     }

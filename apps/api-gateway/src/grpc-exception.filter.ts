@@ -1,38 +1,54 @@
+/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 import {
   ArgumentsHost,
   Catch,
   ExceptionFilter,
-  HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
 import { Response } from 'express';
 
-@Catch() // ✅ Catch ALL exceptions, not just RpcException
+interface GrpcError {
+  code: number;
+  message: string;
+  details?: string;
+}
+
+@Catch()
 export class GrpcExceptionFilter implements ExceptionFilter {
-  catch(exception: any, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
 
     console.error('🔥 GrpcExceptionFilter Caught Exception:', exception);
 
-    let grpcCode = status.UNKNOWN; // Default gRPC status code
+    let grpcCode: number = status.UNKNOWN;
     let message = 'Internal Server Error';
 
-    // ✅ If the exception is RpcException, extract error details
     if (exception instanceof RpcException) {
-      const error: any = exception.getError();
-      grpcCode = error?.code || status.UNKNOWN;
-      message = error?.message || 'Internal Server Error';
-    } else if (exception.code !== undefined) {
-      // ✅ Some gRPC errors are not RpcException, check `exception.code`
-      grpcCode = exception.code;
+      const error = exception.getError();
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        'message' in error
+      ) {
+        grpcCode = (error as GrpcError).code;
+        message = (error as GrpcError).message;
+      }
+    } else if (
+      typeof exception === 'object' &&
+      exception !== null &&
+      'code' in exception
+    ) {
+      grpcCode = (exception as GrpcError).code;
       message =
-        exception.details || exception.message || 'Internal Server Error';
+        (exception as GrpcError).details ||
+        (exception as GrpcError).message ||
+        'Internal Server Error';
     }
 
-    // ✅ gRPC to HTTP status mapping
     const httpStatus = this.mapGrpcToHttpStatus(grpcCode);
 
     console.error(

@@ -6,6 +6,12 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { Observable } from 'rxjs';
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
   canActivate(
@@ -14,7 +20,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     return super.canActivate(context);
   }
 
-  handleRequest(err, user) {
+  handleRequest(err: any, user: User): User {
     if (err || !user) {
       throw err || new UnauthorizedException();
     }

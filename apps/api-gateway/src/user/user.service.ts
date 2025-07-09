@@ -32,7 +32,7 @@ export class UserService implements OnModuleInit {
     return await firstValueFrom(this.userService.createUser(createUserDto));
   }
 
-  async login(loginDto: LoginDto) {
+  login(loginDto: LoginDto) {
     return this.userService.login(loginDto);
   }
 }

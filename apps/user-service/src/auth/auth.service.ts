@@ -7,7 +7,7 @@ import { PrismaService } from 'prisma/prisma.service';
 import { CreateUserDto } from '@repo/shared-dtos/src/dtos/create-user.dto';
 import { LoginDto } from '@repo/shared-dtos/src/dtos/login.dto';
 import { RpcException } from '@nestjs/microservices';
-import { status } from '@grpc/grpc-js'; 
+import { status } from '@grpc/grpc-js';
 import { Logger } from 'nestjs-pino';
 
 @Injectable()
@@ -68,7 +68,7 @@ export class AuthService {
 
       this.logger.log({ user }, 'User found');
       return user;
-    } catch (error ) {
+    } catch (error) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       this.logger.error({ error }, 'Error finding user');
       throw error;

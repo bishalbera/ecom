@@ -79,9 +79,13 @@ export class PaymentService {
         signature,
         endpointSecret,
       );
-    } catch (err: any) {
-      this.logger.error(`Webhook Error: ${err.message}`);
-      throw new Error(`Webhook Error: ${err.message}`);
+    } catch (err) {
+      if (err instanceof Error) {
+        this.logger.error(`Webhook Error: ${err.message}`);
+        throw new Error(`Webhook Error: ${err.message}`);
+      }
+      this.logger.error('Webhook Error: An unknown error occurred');
+      throw new Error('Webhook Error: An unknown error occurred');
     }
     if (event.type === 'payment_intent.succeeded') {
       const paymentIntent = event.data.object;
