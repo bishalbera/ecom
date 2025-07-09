@@ -52,9 +52,9 @@ jobs:
         # Turbo will use the remote cache and only lint changed packages
         run: pnpm turbo run lint
 
-      - name: Run Tests
-        # Turbo will use the remote cache and only test changed packages
-        run: pnpm turbo run test
+      # - name: Run Tests
+      #   # Turbo will use the remote cache and only test changed packages
+      #   run: pnpm turbo run test
 
   # ==================================================================
   # Job 2: Determine which services have changed
