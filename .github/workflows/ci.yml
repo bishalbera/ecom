@@ -100,12 +100,15 @@ jobs:
       - name: Identify affected services
         id: set-matrix
         run: |
-          TURBO_OUTPUT=$(pnpm turbo run build --filter="./apps/*" --dry-run=json --output-logs=none -- --base=${{ steps.get-shas.outputs.base_sha }} --head=${{ steps.get-shas.outputs.head_sha }})
+          # Run Turbo dry-run and extract only the valid JSON output (last line)
+          TURBO_OUTPUT=$(pnpm turbo run build --filter="./apps/*" --dry-run=json -- --base=${{ steps.get-shas.outputs.base_sha }} --head=${{ steps.get-shas.outputs.head_sha }} | tail -n 1)
 
-          AFFECTED_SERVICES=$(echo "$TURBO_OUTPUT" | jq -c '[.packages[] | select(.cache.status != "hit")] | map(select(.task == "build") | .displayName)')
+          # Safely parse affected services from Turbo output
+          AFFECTED_SERVICES=$(echo "$TURBO_OUTPUT" | jq -c '[.packages[] | select(.cache.status != "hit" and .task == "build") | .displayName]')
 
           echo "Affected services that need to be built: $AFFECTED_SERVICES"
           echo "matrix={\"service\":$AFFECTED_SERVICES}" >> $GITHUB_OUTPUT
+
 
 
   # ==================================================================
