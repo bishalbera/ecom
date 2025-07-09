@@ -146,4 +146,4 @@ jobs:
           push: true
           tags: |
             ${{ env.DOCKER_HUB_USERNAME }}/${{ matrix.service }}:latest
-            ${{ env.DOCKER_HUB_USERNAME }}/${{ matrix.service }}:${{ substr(github.sha, 0, 7) }}
+            ${{ env.DOCKER_HUB_USERNAME }}/${{ matrix.service }}:${{ substring(github.sha, 0, 7) }}
