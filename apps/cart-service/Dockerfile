@@ -10,7 +10,7 @@ RUN go mod download
 COPY . .
 
 
-WORKDIR /app/apps/product-service
+WORKDIR /app/apps/cart-service
 
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./out/server -ldflags "-w -s" ./cmd/api
@@ -23,7 +23,7 @@ USER nonroot
 
 WORKDIR /app
 
-COPY --from=builder /app/apps/product-service/out/server .
+COPY --from=builder /app/apps/cart-service/out/server .
 
 CMD ["./server"]
 
