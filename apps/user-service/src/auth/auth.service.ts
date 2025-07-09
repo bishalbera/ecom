@@ -44,7 +44,7 @@ export class AuthService {
       const { password, ...result } = user;
       this.logger.log({ result }, 'User created successfully');
       return result;
-    } catch (error: any) {
+    } catch (error) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       this.logger.error({ error }, 'Error creating user');
       throw error;
@@ -68,7 +68,7 @@ export class AuthService {
 
       this.logger.log({ user }, 'User found');
       return user;
-    } catch (error: any) {
+    } catch (error ) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       this.logger.error({ error }, 'Error finding user');
       throw error;
@@ -82,7 +82,7 @@ export class AuthService {
       const result = this.signPayload(user);
       this.logger.log({ result }, 'User logged in successfully');
       return result;
-    } catch (error: any) {
+    } catch (error) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       this.logger.error({ error }, 'Error logging in user');
       throw error;
