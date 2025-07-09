@@ -1,0 +1,149 @@
+
+name: CI - Build and Push Docker Images
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  # Your Docker Hub username. Set this in GitHub secrets.
+  DOCKER_HUB_USERNAME: bishal2469
+  # Environment variables for Turborepo Remote Caching
+  # Set these in GitHub secrets after running `npx turbo link`
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  TURBO_API: https://api.vercel.com
+
+jobs:
+  # ==================================================================
+  # Job 1: Lint and Test all services
+  # Leverages Remote Caching to be extremely fast on subsequent runs.
+  # ==================================================================
+  lint-and-test:
+    name: Lint and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache: true
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run Linting
+        # Turbo will use the remote cache and only lint changed packages
+        run: pnpm turbo run lint
+
+      - name: Run Tests
+        # Turbo will use the remote cache and only test changed packages
+        run: pnpm turbo run test
+
+  # ==================================================================
+  # Job 2: Determine which services have changed
+  # This job asks Turborepo what has been affected by the latest commits
+  # and creates a JSON matrix for the next job to use.
+  # ==================================================================
+  determine-changes:
+    name: Determine Changed Services
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+    # Only run this job on a push to the main branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # We need to fetch more than the latest commit to compare against main
+          fetch-depth: 0
+
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Install jq
+        run: sudo apt-get -y install jq
+
+      - name: Set base and head SHAs
+        id: get-shas
+        run: |
+          echo "base_sha=$(git merge-base origin/main HEAD~1)" >> $GITHUB_OUTPUT
+          echo "head_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Identify affected services
+        id: set-matrix
+        run: |
+          # First, get the JSON output from turbo's dry run for the build task.
+          # It's filtered to the specific apps that can be built into Docker images.
+          # It compares the current HEAD to the last commit on main.
+          TURBO_OUTPUT=$(pnpm turbo run build --filter="./apps/*" --dry-run=json -- --base=${{ steps.get-shas.outputs.base_sha }} --head=${{ steps.get-shas.outputs.head_sha }})
+          
+          # Parse the JSON to find packages that are NOT cache hits and extract their names.
+          # The name is in the format "apps/service-name#build", so we strip the rest.
+          AFFECTED_SERVICES=$(echo $TURBO_OUTPUT | jq -c '[.packages[] | select(.cache.status != "hit")] | map(select(.task == "build") | .displayName)')
+          
+          echo "Affected services that need to be built: $AFFECTED_SERVICES"
+          echo "matrix={"service":$AFFECTED_SERVICES}" >> $GITHUB_OUTPUT
+
+  # ==================================================================
+  # Job 3: Build and Push Docker images for CHANGED services
+  # This job uses the dynamic matrix from the previous job.
+  # ==================================================================
+  build-and-push-images:
+    name: Build and Push Docker Images
+    needs: determine-changes
+    if: needs.determine-changes.outputs.matrix != '{"service":[]}' # Don't run if the matrix is empty
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      # Use the JSON matrix generated in the 'determine-changes' job
+      matrix: ${{ fromJson(needs.determine-changes.outputs.matrix) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/${{ matrix.service }}
+          push: true
+          tags: |
+            ${{ env.DOCKER_HUB_USERNAME }}/${{ matrix.service }}:latest
+            ${{ env.DOCKER_HUB_USERNAME }}/${{ matrix.service }}:${{ substr(github.sha, 0, 7) }}
