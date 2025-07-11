@@ -160,7 +160,7 @@ jobs:
           context: ./apps/${{ matrix.service }}
           push: true
           tags: |
-                        ${{ env.DOCKER_HUB_USERNAME }}/${{ matrix.service }}:latest
+            ${{ env.DOCKER_HUB_USERNAME }}/${{ matrix.service }}:latest
             ${{ env.DOCKER_HUB_USERNAME }}/${{ matrix.service }}:${{ steps.vars.outputs.short_sha }}
 
   build-and-push-seeder:
