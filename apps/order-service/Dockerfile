@@ -1,12 +1,12 @@
 
 # Stage 1: Build the Go binary
-FROM golang:1.22-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 # Set the working directory inside the container
 WORKDIR /app
 
 # Copy the Go module files first to leverage Docker layer caching
-COPY go.mod go.sum ./
+COPY apps/order-service/go.mod apps/order-service/go.sum ./
 
 # Download Go module dependencies
 RUN go mod download
