@@ -1,0 +1,29 @@
+apiVersion: v2
+name: ecom
+description: A Helm chart for deploying the ecom application
+
+type: application
+
+version: 0.1.0
+
+appVersion: "1.16.0"
+
+dependencies:
+- name: api-gateway
+  version: 0.1.0
+  repository: file://./
+- name: cart-service
+  version: 0.1.0
+  repository: file://./
+- name: order-service
+  version: 0.1.0
+  repository: file://./
+- name: payment-service
+  version: 0.1.0
+  repository: file://./
+- name: product-service
+  version: 0.1.0
+  repository: file://./
+- name: user-service
+  version: 0.1.0
+  repository: file://./

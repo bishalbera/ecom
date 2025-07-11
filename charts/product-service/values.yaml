@@ -1,0 +1,49 @@
+# Default values for product-service.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: bishal2469/product-service
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: false
+
+resources: {}
+
+autoscaling:
+  enabled: false
+
+seeder:
+  enabled: true
+  image:
+    repository: bishal2469/product-service-seeder
+    pullPolicy: IfNotPresent
+    tag: "latest"
+  cronjob:
+    enabled: false
+    schedule: "0 0 * * 0" # Every Sunday at midnight
+

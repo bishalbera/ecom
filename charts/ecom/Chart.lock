@@ -1,0 +1,21 @@
+dependencies:
+- name: api-gateway
+  repository: file://./
+  version: 0.1.0
+- name: cart-service
+  repository: file://./
+  version: 0.1.0
+- name: order-service
+  repository: file://./
+  version: 0.1.0
+- name: payment-service
+  repository: file://./
+  version: 0.1.0
+- name: product-service
+  repository: file://./
+  version: 0.1.0
+- name: user-service
+  repository: file://./
+  version: 0.1.0
+digest: sha256:2145ea9c75e9f9b6f33b6fef9ff90f18f1e2b95970cebf6ae8338263667a83fe
+generated: "2025-07-11T07:15:22.223462+05:30"

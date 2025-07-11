@@ -73,10 +73,7 @@ func (s *Server) UploadProductsHandler(c *fiber.Ctx) error {
 
 	const batchSize = 1000
 	for i := 0; i < len(products); i += batchSize {
-		end := i + batchSize
-		if end > len(products) {
-			end = len(products)
-		}
+		end := min(i + batchSize, len(products))
 
 		batch := products[i:end]
 		if err := s.db.UploadMany(batch); err != nil {

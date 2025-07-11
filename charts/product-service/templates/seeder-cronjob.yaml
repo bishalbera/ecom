@@ -1,0 +1,24 @@
+{{- if .Values.seeder.cronjob.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-product-seeder-cronjob
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+spec:
+  schedule: "{{ .Values.seeder.cronjob.schedule }}"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: seeder
+            image: "{{ .Values.seeder.image.repository }}:{{ .Values.seeder.image.tag }}"
+            imagePullPolicy: {{ .Values.seeder.image.pullPolicy }}
+            env:
+            - name: PRODUCT_SERVICE_URL
+              value: http://{{ .Release.Name }}-product-service:{{ .Values.service.port }}
+{{- end }}

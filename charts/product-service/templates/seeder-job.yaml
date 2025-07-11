@@ -1,0 +1,31 @@
+{{- if .Values.seeder.enabled -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-product-seeder
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+spec:
+  template:
+    metadata:
+      name: {{ .Release.Name }}-product-seeder
+      labels:
+        app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+        app.kubernetes.io/instance: {{ .Release.Name | quote }}
+        helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: seeder
+        image: "{{ .Values.seeder.image.repository }}:{{ .Values.seeder.image.tag }}"
+        imagePullPolicy: {{ .Values.seeder.image.pullPolicy }}
+        env:
+        - name: PRODUCT_SERVICE_URL
+          value: http://{{ .Release.Name }}-product-service:{{ .Values.service.port }}
+{{- end }}
