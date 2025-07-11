@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-
 import {
   Controller,
   Get,
@@ -58,18 +56,21 @@ export class ProductController {
   @UseGuards(JwtAuthGuard)
   @Get('search')
   async searchProducts(@Query() query: SearchQueryDto) {
-    if (!query.query || query.query.trim() === '') {
-      throw new NotFoundException('Query parameter is required');
+    // Allow search by category, query, or other filters - at least one should be provided
+    if ((!query.query || query.query.trim() === '') && 
+        (!query.category || query.category.trim() === '') &&
+        !query.minPrice && !query.maxPrice) {
+      throw new NotFoundException('At least one search parameter (query, category, minPrice, or maxPrice) is required');
     }
 
     const searchReq: SearchReq = {
       query: query.query || '',
       category: query.category || '',
-      minPrice: query.minPrice || 0, // Removed parseFloat
-      maxPrice: query.maxPrice || 0, // Removed parseFloat
+      minPrice: query.minPrice || 0,
+      maxPrice: query.maxPrice || 0,
       sort: query.sort || '',
-      limit: query.limit || 10, // Removed parseInt
-      page: query.page || 1, // Removed parseInt
+      limit: query.limit || 10,
+      page: query.page || 1,
     };
 
     const res = await this.productService.SearchProducts(searchReq);

@@ -43,6 +43,7 @@ func gracefulShutdown(server *http_server.Server, done chan bool) {
 
 func main() {
 
+	log.New() // Initialize logger
 	db := database.New()
 	server := http_server.New()
 

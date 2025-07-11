@@ -1,4 +1,4 @@
-import { Inject, Injectable, OnModuleInit, Scope } from '@nestjs/common';
+import { Inject, Injectable, Scope } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
 import { REQUEST } from '@nestjs/core';
 import {
@@ -10,34 +10,49 @@ import {
   OrderRes,
   OrderServiceClient,
 } from '@repo/proto/src/types/order';
-import { firstValueFrom } from 'rxjs';
 import { Metadata } from '@grpc/grpc-js';
+import { Request } from 'express';
+
+interface User {
+  id?: string;
+  userId?: string;
+  sub?: string;
+}
+
+interface RequestWithUser extends Request {
+  user: User;
+}
 
 @Injectable({ scope: Scope.REQUEST })
 export class OrderService {
-  private orderSerivice: OrderServiceClient;
 
   constructor(
     @Inject(ORDER_SERVICE_NAME) private readonly client: ClientGrpc,
-    @Inject(REQUEST) private readonly request: any,
+    @Inject(REQUEST) private readonly request: RequestWithUser,
   ) {
-    this.orderSerivice =
-      this.client.getService<OrderServiceClient>(ORDER_SERVICE_NAME);
   }
 
   async CreateOrder(req: CreateOrderReq): Promise<OrderRes> {
     const metadata = new Metadata();
     const user = this.request.user;
     if (user) {
-      metadata.add(
-        'user',
-        user.id || user.userId || user.sub || JSON.stringify(user),
-      );
+      const userString =
+        user.id || user.userId || user.sub || JSON.stringify(user);
+      metadata.add('user', userString);
     }
     console.log('Metadata being sent to Order Service:', metadata.getMap());
-    const order: OrderRes = await firstValueFrom(
-      (this.orderSerivice as any).createOrder(req, metadata),
-    );
+    
+    // Use the raw client to make the call with metadata
+    const client = this.client.getClientByServiceName(ORDER_SERVICE_NAME);
+    const order: OrderRes = await new Promise((resolve, reject) => {
+      client.createOrder(req, metadata, (error: any, response: any) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(response);
+        }
+      });
+    });
     return {
       id: order.id,
       userId: order.userId,
@@ -52,15 +67,23 @@ export class OrderService {
     const metadata = new Metadata();
     const user = this.request.user;
     if (user) {
-      metadata.add(
-        'user',
-        user.id || user.userId || user.sub || JSON.stringify(user),
-      );
+      const userString =
+        user.id || user.userId || user.sub || JSON.stringify(user);
+      metadata.add('user', userString);
     }
     console.log('Metadata being sent to Order Service:', metadata.getMap());
-    const order: OrderRes = await firstValueFrom(
-      (this.orderSerivice as any).getOrder(req, metadata),
-    );
+    
+    // Use the raw client to make the call with metadata
+    const client = this.client.getClientByServiceName(ORDER_SERVICE_NAME);
+    const order: OrderRes = await new Promise((resolve, reject) => {
+      client.getOrder(req, metadata, (error: any, response: any) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(response);
+        }
+      });
+    });
     return {
       id: order.id,
       userId: order.userId,
@@ -75,15 +98,23 @@ export class OrderService {
     const metadata = new Metadata();
     const user = this.request.user;
     if (user) {
-      metadata.add(
-        'user',
-        user.id || user.userId || user.sub || JSON.stringify(user),
-      );
+      const userString =
+        user.id || user.userId || user.sub || JSON.stringify(user);
+      metadata.add('user', userString);
     }
     console.log('Metadata being sent to Order Service:', metadata.getMap());
-    const orders: AllOrderRes = await firstValueFrom(
-      (this.orderSerivice as any).getAllOrders(req, metadata),
-    );
+    
+    // Use the raw client to make the call with metadata
+    const client = this.client.getClientByServiceName(ORDER_SERVICE_NAME);
+    const orders: AllOrderRes = await new Promise((resolve, reject) => {
+      client.getAllOrders(req, metadata, (error: any, response: any) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(response);
+        }
+      });
+    });
     return {
       orders: orders.orders.map((order) => ({
         id: order.id,

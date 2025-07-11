@@ -34,7 +34,7 @@ func (s *OrderGrpcServer) GetOrder(ctx context.Context, req *pb.GetOrderReq) (*p
 	user := ctx.Value("user").(string)
 	if user == "" {
 		s.logger.Error("invalid user")
-		return nil, status.Errorf(codes.Unauthenticated, "invaild user")
+		return nil, status.Errorf(codes.Unauthenticated, "invalid user")
 	}
 	order, err := s.svc.GetOrder(req.Id)
 	if err != nil {
@@ -52,7 +52,7 @@ func (s *OrderGrpcServer) GetAllOrders(ctx context.Context, _ *pb.Empty) (*pb.Al
 	user := ctx.Value("user").(string)
 	if user == "" {
 		s.logger.Error("invalid user")
-		return nil, status.Errorf(codes.Unauthenticated, "invaild user")
+		return nil, status.Errorf(codes.Unauthenticated, "invalid user")
 	}
 	orders, err := s.svc.GetAllOrders(user)
 	if err != nil {
@@ -71,7 +71,7 @@ func (s *OrderGrpcServer) CreateOrder(ctx context.Context, req *pb.CreateOrderRe
 	user := ctx.Value("user").(string)
 	if user == "" {
 		s.logger.Error("invalid user")
-		return nil, status.Errorf(codes.Unauthenticated, "invaild user")
+		return nil, status.Errorf(codes.Unauthenticated, "invalid user")
 	}
 
 	var items []model.OrderItems
