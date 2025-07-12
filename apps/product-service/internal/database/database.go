@@ -96,7 +96,7 @@ func (s *service) SearchProducts(query string, category string, minPrice, maxPri
 		db = db.Where("price <= ?", maxPrice)
 	}
 
-	// Soring
+	// Sorting
 	switch sort {
 	case "price_asc":
 		db = db.Order("price ASC")
@@ -191,6 +191,6 @@ func (s *service) Close() error {
 	if err != nil {
 		return fmt.Errorf("failed  to retrieve sql.DB for closing: %w", err)
 	}
-	log.Logger.Info("Disconnected from database: %s", database)
+	log.Logger.Info("Disconnected from database: %s", "info",database)
 	return sqlDB.Close()
 }

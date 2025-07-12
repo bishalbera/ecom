@@ -57,10 +57,15 @@ export class ProductController {
   @Get('search')
   async searchProducts(@Query() query: SearchQueryDto) {
     // Allow search by category, query, or other filters - at least one should be provided
-    if ((!query.query || query.query.trim() === '') && 
-        (!query.category || query.category.trim() === '') &&
-        !query.minPrice && !query.maxPrice) {
-      throw new NotFoundException('At least one search parameter (query, category, minPrice, or maxPrice) is required');
+    if (
+      (!query.query || query.query.trim() === '') &&
+      (!query.category || query.category.trim() === '') &&
+      !query.minPrice &&
+      !query.maxPrice
+    ) {
+      throw new NotFoundException(
+        'At least one search parameter (query, category, minPrice, or maxPrice) is required',
+      );
     }
 
     const searchReq: SearchReq = {

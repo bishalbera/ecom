@@ -12,6 +12,7 @@ import {
 } from '@repo/proto/src/types/order';
 import { Metadata } from '@grpc/grpc-js';
 import { Request } from 'express';
+import { lastValueFrom, Observable } from 'rxjs';
 
 interface User {
   id?: string;
@@ -22,15 +23,21 @@ interface User {
 interface RequestWithUser extends Request {
   user: User;
 }
+interface OrderServiceClientWithMetadata extends OrderServiceClient {
+  createOrder(
+    request: CreateOrderReq,
+    metadata?: Metadata,
+  ): Observable<OrderRes>;
+  getOrder(request: GetOrderReq, metadata?: Metadata): Observable<OrderRes>;
+  getAllOrders(request: Empty, metadata?: Metadata): Observable<AllOrderRes>;
+}
 
 @Injectable({ scope: Scope.REQUEST })
 export class OrderService {
-
   constructor(
     @Inject(ORDER_SERVICE_NAME) private readonly client: ClientGrpc,
     @Inject(REQUEST) private readonly request: RequestWithUser,
-  ) {
-  }
+  ) {}
 
   async CreateOrder(req: CreateOrderReq): Promise<OrderRes> {
     const metadata = new Metadata();
@@ -41,26 +48,13 @@ export class OrderService {
       metadata.add('user', userString);
     }
     console.log('Metadata being sent to Order Service:', metadata.getMap());
-    
-    // Use the raw client to make the call with metadata
-    const client = this.client.getClientByServiceName(ORDER_SERVICE_NAME);
-    const order: OrderRes = await new Promise((resolve, reject) => {
-      client.createOrder(req, metadata, (error: any, response: any) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(response);
-        }
-      });
-    });
-    return {
-      id: order.id,
-      userId: order.userId,
-      orderStatus: order.orderStatus,
-      total: order.total,
-      items: order.items,
-      clientSecret: order.clientSecret,
-    };
+
+    const client =
+      this.client.getService<OrderServiceClientWithMetadata>(
+        ORDER_SERVICE_NAME,
+      );
+
+    return await lastValueFrom(client.createOrder(req, metadata));
   }
 
   async GetOrder(req: GetOrderReq): Promise<OrderRes> {
@@ -72,26 +66,12 @@ export class OrderService {
       metadata.add('user', userString);
     }
     console.log('Metadata being sent to Order Service:', metadata.getMap());
-    
-    // Use the raw client to make the call with metadata
-    const client = this.client.getClientByServiceName(ORDER_SERVICE_NAME);
-    const order: OrderRes = await new Promise((resolve, reject) => {
-      client.getOrder(req, metadata, (error: any, response: any) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(response);
-        }
-      });
-    });
-    return {
-      id: order.id,
-      userId: order.userId,
-      orderStatus: order.orderStatus,
-      clientSecret: order.clientSecret,
-      total: order.total,
-      items: order.items,
-    };
+
+    const client =
+      this.client.getService<OrderServiceClientWithMetadata>(
+        ORDER_SERVICE_NAME,
+      );
+    return await lastValueFrom(client.getOrder(req, metadata));
   }
 
   async GetAllOrders(req: Empty): Promise<AllOrderRes> {
@@ -103,27 +83,12 @@ export class OrderService {
       metadata.add('user', userString);
     }
     console.log('Metadata being sent to Order Service:', metadata.getMap());
-    
-    // Use the raw client to make the call with metadata
-    const client = this.client.getClientByServiceName(ORDER_SERVICE_NAME);
-    const orders: AllOrderRes = await new Promise((resolve, reject) => {
-      client.getAllOrders(req, metadata, (error: any, response: any) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(response);
-        }
-      });
-    });
-    return {
-      orders: orders.orders.map((order) => ({
-        id: order.id,
-        userId: order.userId,
-        orderStatus: order.orderStatus,
-        items: order.items,
-        total: order.total,
-        clientSecret: order.clientSecret,
-      })),
-    };
+
+    const client =
+      this.client.getService<OrderServiceClientWithMetadata>(
+        ORDER_SERVICE_NAME,
+      );
+
+    return await lastValueFrom(client.getAllOrders(req, metadata));
   }
 }
