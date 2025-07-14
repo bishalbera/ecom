@@ -171,8 +171,8 @@ jobs:
   build-and-push-images:
     name: Build and Push Docker Images
     needs: determine-changes
-    # Only run if there are changes to build
-    if: needs.determine-changes.outputs.has-changes == 'true'
+    # Only run if there are changes to build AND we're on main branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.determine-changes.outputs.has-changes == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
