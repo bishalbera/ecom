@@ -17,7 +17,6 @@ async function bootstrap() {
   const logger = app.get(Logger);
 
   app.useGlobalFilters(new GrpcExceptionFilter());
-
   app.useGlobalInterceptors(new GrpcLoggingInterceptor(logger));
 
   try {
