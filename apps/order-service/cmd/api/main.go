@@ -17,7 +17,6 @@ import (
 	"time"
 
 	productpb "order-service/github.com/ecom/packages/proto/product"
-	// paymentpb "order-service/github.com/ecom/packages/proto/payment"
 	client "order-service/internal/grpc"
 
 	_ "github.com/joho/godotenv/autoload"
