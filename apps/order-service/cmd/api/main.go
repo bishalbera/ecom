@@ -15,7 +15,6 @@ import (
 	"strconv"
 	"syscall"
 	"time"
-
 	productpb "order-service/github.com/ecom/packages/proto/product"
 	client "order-service/internal/grpc"
 

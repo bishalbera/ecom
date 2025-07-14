@@ -28,7 +28,6 @@ async function bootstrap() {
     options: {
       package: USER_PACKAGE_NAME,
       protoPath: protoPath,
-
       url: `localhost:${grpcPort}`,
     },
   });

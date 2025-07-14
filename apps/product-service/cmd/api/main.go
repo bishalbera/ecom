@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"syscall"
 	"time"
-
 	_ "github.com/joho/godotenv/autoload"
 )
 
