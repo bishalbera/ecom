@@ -48,5 +48,6 @@ bootstrap().catch((err) => {
   // Using console.error here because the logger might not be available
   // if the bootstrap function fails early.
   console.error('Unhandled error during bootstrap', err);
+  
   process.exit(1);
 });

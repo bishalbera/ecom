@@ -158,18 +158,24 @@ jobs:
             echo "matrix={\"service\":[]}" >> $GITHUB_OUTPUT
           else
             echo "Affected services: ${AFFECTED_SERVICES[*]}"
-            SERVICES_JSON=$(printf '%s\n' "${AFFECTED_SERVICES[@]}" | jq -R . | jq -s .)
             echo "has-changes=true" >> $GITHUB_OUTPUT
-            MATRIX_JSON=$(jq -c --argjson services "$SERVICES_JSON" '{service: $services}')
+            
+            # Build JSON array manually for better reliability
+            SERVICES_JSON="["
+            for i in "${!AFFECTED_SERVICES[@]}"; do
+              if [ $i -gt 0 ]; then
+                SERVICES_JSON+=","
+              fi
+              SERVICES_JSON+="\"${AFFECTED_SERVICES[$i]}\""
+            done
+            SERVICES_JSON+="]"
+            
+            MATRIX_JSON="{\"service\":$SERVICES_JSON}"
             echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
-          fi
-
-          # Debug output
-          echo "Final matrix output:"
-          if [ ${#AFFECTED_SERVICES[@]} -eq 0 ]; then
-            echo "{\"service\":[]}"
-          else
-            echo "$MATRIX_JSON"
+            
+            # Debug output
+            echo "Services JSON: $SERVICES_JSON"
+            echo "Final matrix output: $MATRIX_JSON"
           fi
 
   # ==================================================================
