@@ -1,4 +1,3 @@
-
 # Stage 1: Build the Go binary
 FROM golang:1.23-alpine AS builder
 
@@ -6,18 +5,13 @@ FROM golang:1.23-alpine AS builder
 WORKDIR /app
 
 # Copy the Go module files first to leverage Docker layer caching
-COPY apps/order-service/go.mod apps/order-service/go.sum ./
+COPY go.mod go.sum ./
 
 # Download Go module dependencies
 RUN go mod download
 
-# Copy the entire monorepo source code
-# This is necessary because the Go service might have dependencies
-# on other packages within the monorepo (e.g., `packages/proto`).
+# Copy source code
 COPY . .
-
-# Set the working directory to the specific service we want to build
-WORKDIR /app/apps/order-service
 
 # Build the Go binary
 # -o ./out/server: Specifies the output directory and filename for the binary.
@@ -25,7 +19,6 @@ WORKDIR /app/apps/order-service
 # CGO_ENABLED=0: Disables CGO to create a static binary.
 # GOOS=linux GOARCH=amd64: Ensures the binary is built for a Linux environment.
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./out/server -ldflags "-w -s" ./cmd/api
-
 
 # Stage 2: Create the final, minimal production image
 FROM alpine:latest
@@ -38,7 +31,7 @@ USER nonroot
 WORKDIR /app
 
 # Copy the compiled binary from the builder stage
-COPY --from=builder /app/apps/order-service/out/server .
+COPY --from=builder /app/out/server .
 
 # The Go app in this project listens on port 8080 by default.
 EXPOSE 8080

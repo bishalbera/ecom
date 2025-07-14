@@ -206,6 +206,66 @@ jobs:
         id: vars
         run: echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
+      - name: Setup PNPM (for Node.js services)
+        uses: pnpm/action-setup@v4
+        
+      - name: Setup Node.js (for Node.js services)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      
+      - name: Prepare service build context
+        run: |
+          # Check if this is a Node.js service
+          if [ -f "./apps/${{ matrix.service }}/package.json" ]; then
+            echo "Preparing Node.js service: ${{ matrix.service }}"
+            
+            # Install dependencies to prepare workspace
+            pnpm install --frozen-lockfile
+            
+            # Copy shared packages to service directory
+            if [ -d "packages" ]; then
+              mkdir -p "./apps/${{ matrix.service }}/packages"
+              cp -r packages/* "./apps/${{ matrix.service }}/packages/"
+            fi
+            
+            # Copy root package files to service directory
+            cp package.json pnpm-lock.yaml pnpm-workspace.yaml "./apps/${{ matrix.service }}/"
+            
+            # Update service's package.json to use local packages
+            cd "./apps/${{ matrix.service }}"
+            node -e "
+              const fs = require('fs');
+              const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+              
+              const replaceDeps = (deps) => {
+                if (!deps) return;
+                Object.keys(deps).forEach(key => {
+                  if (deps[key] === 'workspace:*') {
+                    deps[key] = 'file:packages/' + key.replace('@repo/', '');
+                  }
+                });
+              };
+              
+              replaceDeps(pkg.dependencies);
+              replaceDeps(pkg.devDependencies);
+              
+              fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+            "
+            
+            # Create a simple workspace file for the service
+            cat > pnpm-workspace.yaml << EOF
+          packages:
+            - '.'
+            - 'packages/*'
+          EOF
+            
+            cd ../..
+          else
+            echo "Go service detected: ${{ matrix.service }}"
+          fi
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
