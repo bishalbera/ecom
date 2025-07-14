@@ -31,7 +31,6 @@ async function bootstrap() {
       url: `localhost:${grpcPort}`,
     },
   });
-  
 
   try {
     await app.startAllMicroservices();
