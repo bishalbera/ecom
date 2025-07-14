@@ -151,7 +151,7 @@ jobs:
             done
           fi
 
-          # Convert to JSON array
+          # Convert to JSON array and always output a valid JSON structure
           if [ ${#AFFECTED_SERVICES[@]} -eq 0 ]; then
             echo "No affected services found"
             echo "has-changes=false" >> $GITHUB_OUTPUT
@@ -162,6 +162,14 @@ jobs:
             echo "has-changes=true" >> $GITHUB_OUTPUT
             MATRIX_JSON=$(jq -c --argjson services "$SERVICES_JSON" '{service: $services}')
             echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
+          fi
+
+          # Debug output
+          echo "Final matrix output:"
+          if [ ${#AFFECTED_SERVICES[@]} -eq 0 ]; then
+            echo "{\"service\":[]}"
+          else
+            echo "$MATRIX_JSON"
           fi
 
   # ==================================================================
