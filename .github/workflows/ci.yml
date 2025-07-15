@@ -95,77 +95,34 @@ jobs:
         run: |
           # Get the previous commit for comparison
           if [ "${{ github.event_name }}" = "push" ]; then
-            # For push events, compare with previous commit
             BASE_SHA="${{ github.event.before }}"
             HEAD_SHA="${{ github.sha }}"
           else
-            # For PR events, compare with target branch
             BASE_SHA="origin/${{ github.event.pull_request.base.ref }}"
             HEAD_SHA="${{ github.sha }}"
           fi
 
           echo "Comparing $BASE_SHA...$HEAD_SHA"
 
-          # Define services that should have Docker images built
-          # This is the definitive list of services that have Dockerfiles
-          BUILDABLE_SERVICES=("api-gateway" "cart-service" "order-service" "payment-service" "product-service" "user-service")
-
-          echo "Buildable services: ${BUILDABLE_SERVICES[*]}"
-
-          # Check which services have changes
-          AFFECTED_SERVICES=()
-          for service in "${BUILDABLE_SERVICES[@]}"; do
-            # Check if there are changes in the service directory
-            if git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -q "^apps/$service/"; then
-              echo "✓ Changes detected in $service"
-              AFFECTED_SERVICES+=("$service")
-            else
-              echo "✗ No changes in $service"
-            fi
-          done
-
-          # Check for changes in shared packages that might affect Node.js services
-          if git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -q "^packages/"; then
-            echo "✓ Changes detected in packages/ - checking dependent services"
-            # Add Node.js services that depend on packages but weren't already added
-            NODE_SERVICES=("api-gateway" "payment-service" "user-service")
-            for service in "${NODE_SERVICES[@]}"; do
-              if [[ ! " ${AFFECTED_SERVICES[@]} " =~ " ${service} " ]]; then
-                echo "✓ Adding $service due to package changes"
-                AFFECTED_SERVICES+=("$service")
-              fi
-            done
-          fi
-
-          # Check for changes in proto files that might affect Go services
-          if git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -q "^packages/proto/.*\.proto$"; then
-            echo "✓ Changes detected in proto files - checking Go services"
-            # Add Go services that use proto files but weren't already added
-            GO_SERVICES=("cart-service" "order-service" "product-service")
-            for service in "${GO_SERVICES[@]}"; do
-              if [[ ! " ${AFFECTED_SERVICES[@]} " =~ " ${service} " ]]; then
-                echo "✓ Adding $service due to proto changes"
-                AFFECTED_SERVICES+=("$service")
-              fi
-            done
-          fi
+          # Use pnpm to find affected services
+          AFFECTED_SERVICES=$(pnpm list --filter="...[${BASE_SHA}...${HEAD_SHA}]" --json | jq -r '.[].name')
 
           # Convert to JSON array and always output a valid JSON structure
-          if [ ${#AFFECTED_SERVICES[@]} -eq 0 ]; then
+          if [ -z "$AFFECTED_SERVICES" ]; then
             echo "No affected services found"
             echo "has-changes=false" >> $GITHUB_OUTPUT
             echo "matrix={\"service\":[]}" >> $GITHUB_OUTPUT
           else
-            echo "Affected services: ${AFFECTED_SERVICES[*]}"
+            echo "Affected services: $AFFECTED_SERVICES"
             echo "has-changes=true" >> $GITHUB_OUTPUT
             
             # Build JSON array manually for better reliability
             SERVICES_JSON="["
-            for i in "${!AFFECTED_SERVICES[@]}"; do
-              if [ $i -gt 0 ]; then
+            for service in $AFFECTED_SERVICES; do
+              if [ "$SERVICES_JSON" != "[" ]; then
                 SERVICES_JSON+=","
               fi
-              SERVICES_JSON+="\"${AFFECTED_SERVICES[$i]}\""
+              SERVICES_JSON+="\"$service\""
             done
             SERVICES_JSON+="]"
             
@@ -214,37 +171,16 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
       
-      - name: Prepare service build context
-        run: |
-          # Copy necessary files for Docker build
-          if [ -f "./apps/${{ matrix.service }}/package.json" ]; then
-            echo "Preparing Node.js service: ${{ matrix.service }}"
-            
-            # Copy packages directory to service directory
-            if [ -d "packages" ]; then
-              echo "Copying packages to service directory..."
-              cp -r packages "./apps/${{ matrix.service }}/"
-            fi
-            
-            # Copy pnpm-lock.yaml if it exists
-            if [ -f "pnpm-lock.yaml" ]; then
-              echo "Copying pnpm-lock.yaml to service directory..."
-              cp pnpm-lock.yaml "./apps/${{ matrix.service }}/"
-            fi
-            
-            echo "Service build context prepared successfully"
-          else
-            echo "Go service detected: ${{ matrix.service }} - no preparation needed"
-          fi
+      
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./apps/${{ matrix.service }}
           push: true
           tags: |
             ${{ env.DOCKER_HUB_USERNAME }}/${{ matrix.service }}:latest
             ${{ env.DOCKER_HUB_USERNAME }}/${{ matrix.service }}:${{ steps.vars.outputs.short_sha }}
+          file: ./apps/${{ matrix.service }}/Dockerfile
 
   build-and-push-seeder:
     name: Build and Push Seeder Image
