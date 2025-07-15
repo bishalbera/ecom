@@ -14,7 +14,7 @@ COPY . .
 RUN pnpm install --filter=api-gateway... --prod
 
 # Build the api-gateway
-RUN pnpm turbo run build --filter=api-gateway
+RUN pnpm  run build --filter=api-gateway
 
 # Stage 2: Production image
 FROM node:20-alpine AS production

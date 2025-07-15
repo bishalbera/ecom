@@ -14,7 +14,7 @@ COPY . .
 RUN pnpm install --filter=payment-service... --prod
 
 # Build the payment-service
-RUN pnpm turbo run build --filter=payment-service
+RUN pnpm  run build --filter=payment-service
 
 # Stage 2: Production image
 FROM node:20-alpine AS production

@@ -14,7 +14,7 @@ COPY . .
 RUN pnpm install --filter=user-service... --prod
 
 # Build the user-service
-RUN pnpm turbo run build --filter=user-service
+RUN pnpm run build --filter=user-service
 
 # Stage 2: Production image
 FROM node:20-alpine AS production
