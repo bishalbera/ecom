@@ -223,16 +223,35 @@ jobs:
             # Install dependencies at root level first
             pnpm install --frozen-lockfile
             
-            # Copy shared packages to service directory
+            # Copy only the packages that this service actually needs
             if [ -d "packages" ]; then
-              echo "Copying shared packages to service directory..."
+              echo "Copying required packages to service directory..."
               mkdir -p "./apps/${{ matrix.service }}/packages"
-              cp -r packages/* "./apps/${{ matrix.service }}/packages/"
+              
+              # Extract package dependencies from package.json
+              cd "./apps/${{ matrix.service }}"
+              REQUIRED_PACKAGES=$(node -e "
+                const fs = require('fs');
+                const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+                const deps = {...(pkg.dependencies || {}), ...(pkg.devDependencies || {})};
+                const repoDeps = Object.keys(deps).filter(dep => dep.startsWith('@repo/'));
+                console.log(repoDeps.map(dep => dep.replace('@repo/', '')).join(' '));
+              ")
+              cd ../..
+              
+              # Copy only the required packages
+              for package in $REQUIRED_PACKAGES; do
+                if [ -d "packages/$package" ]; then
+                  echo "Copying package: $package"
+                  cp -r "packages/$package" "./apps/${{ matrix.service }}/packages/"
+                else
+                  echo "Warning: Package $package not found in packages directory"
+                fi
+              done
             fi
             
             # Copy essential root files
             cp package.json "./apps/${{ matrix.service }}/root-package.json"
-            
             # Navigate to service directory
             cd "./apps/${{ matrix.service }}"
             
