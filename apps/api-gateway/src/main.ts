@@ -29,6 +29,5 @@ async function bootstrap() {
 }
 bootstrap().catch((error) => {
   console.error('API Gateway: Failed to start services:', error);
-
   process.exit(1);
 });
