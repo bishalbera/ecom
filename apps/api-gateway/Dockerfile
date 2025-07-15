@@ -17,46 +17,12 @@ COPY packages/typescript-config ./packages/typescript-config
 RUN echo 'packages:\n  - "."\n  - "packages/*"' > pnpm-workspace.yaml
 
 # Update package.json to use local packages
-RUN node -e "
-  const fs = require('fs');
-  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-  
-  const replaceDeps = (deps) => {
-    if (!deps) return;
-    Object.keys(deps).forEach(key => {
-      if (deps[key] === 'workspace:*') {
-        deps[key] = 'file:packages/' + key.replace('@repo/', '');
-      }
-    });
-  };
-  
-  replaceDeps(pkg.dependencies);
-  replaceDeps(pkg.devDependencies);
-  
-  fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
-"
+RUN node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8')); const replaceDeps = (deps) => { if (!deps) return; Object.keys(deps).forEach(key => { if (deps[key] === 'workspace:*') { deps[key] = 'file:packages/' + key.replace('@repo/', ''); } }); }; replaceDeps(pkg.dependencies); replaceDeps(pkg.devDependencies); fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
 
 # Update package dependencies in copied packages
 RUN for pkg in packages/*/package.json; do \
-  if [ -f "$pkg" ]; then \
-    node -e "
-      const fs = require('fs');
-      const pkg = JSON.parse(fs.readFileSync('$pkg', 'utf8'));
-      
-      const replaceDeps = (deps) => {
-        if (!deps) return;
-        Object.keys(deps).forEach(key => {
-          if (deps[key] === 'workspace:*') {
-            deps[key] = 'file:packages/' + key.replace('@repo/', '');
-          }
-        });
-      };
-      
-      replaceDeps(pkg.dependencies);
-      replaceDeps(pkg.devDependencies);
-      
-      fs.writeFileSync('$pkg', JSON.stringify(pkg, null, 2));
-    "; \
+  if [ -f "$$pkg" ]; then \
+    node -e "const fs = require('fs'); const pkg = JSON.parse(fs.readFileSync('$$pkg', 'utf8')); const replaceDeps = (deps) => { if (!deps) return; Object.keys(deps).forEach(key => { if (deps[key] === 'workspace:*') { deps[key] = 'file:packages/' + key.replace('@repo/', ''); } }); }; replaceDeps(pkg.dependencies); replaceDeps(pkg.devDependencies); fs.writeFileSync('$$pkg', JSON.stringify(pkg, null, 2));"; \
   fi; \
 done
 
