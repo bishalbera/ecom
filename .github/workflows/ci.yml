@@ -232,7 +232,6 @@ jobs:
             
             # Copy essential root files
             cp package.json "./apps/${{ matrix.service }}/root-package.json"
-            cp pnpm-lock.yaml "./apps/${{ matrix.service }}/"
             
             # Navigate to service directory
             cd "./apps/${{ matrix.service }}"
@@ -263,6 +262,10 @@ jobs:
             - '.'
             - 'packages/*'
           EOF
+            
+            # CRITICAL FIX: Regenerate lockfile after modifying package.json
+            echo "Regenerating lockfile for modified package.json..."
+            pnpm install --no-frozen-lockfile
             
             echo "Service build context prepared successfully"
             cd ../..
