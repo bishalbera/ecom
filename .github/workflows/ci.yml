@@ -121,21 +121,21 @@ jobs:
           done
 
           # Convert to JSON array and always output a valid JSON structure
-          if [ -z "$AFFECTED_SERVICES" ]; then
+          if [ ${#AFFECTED_SERVICES[@]} -eq 0 ]; then
             echo "No affected services found"
             echo "has-changes=false" >> $GITHUB_OUTPUT
             echo "matrix={\"service\":[]}" >> $GITHUB_OUTPUT
           else
-            echo "Affected services: $AFFECTED_SERVICES"
+            echo "Affected services: ${AFFECTED_SERVICES[*]}"
             echo "has-changes=true" >> $GITHUB_OUTPUT
             
             # Build JSON array manually for better reliability
             SERVICES_JSON="["
-            for service in $AFFECTED_SERVICES; do
-              if [ "$SERVICES_JSON" != "[" ]; then
+            for i in "${!AFFECTED_SERVICES[@]}"; do
+              if [ $i -gt 0 ]; then
                 SERVICES_JSON+=","
               fi
-              SERVICES_JSON+="\"$service\""
+              SERVICES_JSON+="\"${AFFECTED_SERVICES[$i]}\""
             done
             SERVICES_JSON+="]"
             

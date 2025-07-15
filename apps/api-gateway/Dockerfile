@@ -11,7 +11,7 @@ RUN npm install -g pnpm
 COPY . .
 
 # Install dependencies for the api-gateway and its workspace dependencies
-RUN pnpm install --filter=api-gateway... --prod
+RUN pnpm install --filter=api-gateway...
 
 # Build the api-gateway
 RUN pnpm  run build --filter=api-gateway

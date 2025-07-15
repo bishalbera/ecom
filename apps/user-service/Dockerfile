@@ -11,7 +11,7 @@ RUN npm install -g pnpm
 COPY . .
 
 # Install dependencies for the user-service and its workspace dependencies
-RUN pnpm install --filter=user-service... --prod
+RUN pnpm install --filter=user-service...
 
 # Build the user-service
 RUN pnpm run build --filter=user-service

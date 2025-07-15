@@ -11,7 +11,7 @@ RUN npm install -g pnpm
 COPY . .
 
 # Install dependencies for the payment-service and its workspace dependencies
-RUN pnpm install --filter=payment-service... --prod
+RUN pnpm install --filter=payment-service...
 
 # Build the payment-service
 RUN pnpm  run build --filter=payment-service
