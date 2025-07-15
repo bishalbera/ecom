@@ -6,7 +6,8 @@ WORKDIR /app
 RUN npm install -g pnpm
 
 # Copy package files
-COPY package.json pnpm-lock.yaml ./
+COPY package.json ./
+COPY pnpm-lock.yaml ./ 2>/dev/null || echo "No pnpm-lock.yaml found, will generate one"
 
 # Copy only the specific packages this service needs
 COPY packages/proto ./packages/proto

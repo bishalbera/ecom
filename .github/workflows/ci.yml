@@ -216,7 +216,7 @@ jobs:
       
       - name: Prepare service build context
         run: |
-          # Copy packages to service directory for Docker build
+          # Copy necessary files for Docker build
           if [ -f "./apps/${{ matrix.service }}/package.json" ]; then
             echo "Preparing Node.js service: ${{ matrix.service }}"
             
@@ -224,6 +224,12 @@ jobs:
             if [ -d "packages" ]; then
               echo "Copying packages to service directory..."
               cp -r packages "./apps/${{ matrix.service }}/"
+            fi
+            
+            # Copy pnpm-lock.yaml if it exists
+            if [ -f "pnpm-lock.yaml" ]; then
+              echo "Copying pnpm-lock.yaml to service directory..."
+              cp pnpm-lock.yaml "./apps/${{ matrix.service }}/"
             fi
             
             echo "Service build context prepared successfully"
