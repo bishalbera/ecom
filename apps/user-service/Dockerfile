@@ -7,8 +7,9 @@ RUN npm install -g pnpm
 
 # Copy package files
 COPY package.json ./
-COPY pnpm-lock.yaml ./ 2>/dev/null || echo "No pnpm-lock.yaml found, will generate one"
 
+# Copy pnpm-lock.yaml (provided by the build context)
+COPY pnpm-lock.yaml ./
 # Copy only the specific packages this service needs
 COPY packages/proto ./packages/proto
 COPY packages/shared-dtos ./packages/shared-dtos
