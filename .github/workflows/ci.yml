@@ -221,20 +221,24 @@ jobs:
           if [ -f "./apps/${{ matrix.service }}/package.json" ]; then
             echo "Preparing Node.js service: ${{ matrix.service }}"
             
-            # Install dependencies to prepare workspace
+            # Install dependencies at root level first
             pnpm install --frozen-lockfile
             
             # Copy shared packages to service directory
             if [ -d "packages" ]; then
+              echo "Copying shared packages to service directory..."
               mkdir -p "./apps/${{ matrix.service }}/packages"
               cp -r packages/* "./apps/${{ matrix.service }}/packages/"
             fi
             
-            # Copy root package files to service directory
-            cp package.json pnpm-lock.yaml pnpm-workspace.yaml "./apps/${{ matrix.service }}/"
+            # Copy essential root files
+            cp package.json "./apps/${{ matrix.service }}/root-package.json"
+            cp pnpm-lock.yaml "./apps/${{ matrix.service }}/"
             
-            # Update service's package.json to use local packages
+            # Navigate to service directory
             cd "./apps/${{ matrix.service }}"
+            
+            # Update service's package.json to use local packages instead of workspace:*
             node -e "
               const fs = require('fs');
               const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
@@ -261,9 +265,10 @@ jobs:
             - 'packages/*'
           EOF
             
+            echo "Service build context prepared successfully"
             cd ../..
           else
-            echo "Go service detected: ${{ matrix.service }}"
+            echo "Go service detected: ${{ matrix.service }} - no preparation needed"
           fi
 
       - name: Build and push Docker image

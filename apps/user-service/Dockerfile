@@ -17,8 +17,8 @@ COPY . .
 # Generate Prisma client
 RUN npx prisma generate
 
-# Build the application
-RUN pnpm build
+# Build the application (use direct nest build instead of turbo)
+RUN pnpm run build
 
 # Production stage
 FROM node:20-alpine AS production

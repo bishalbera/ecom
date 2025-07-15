@@ -14,8 +14,8 @@ RUN pnpm install --frozen-lockfile
 # Copy source code
 COPY . .
 
-# Build the application
-RUN pnpm build
+# Build the application (use direct nest build instead of turbo)
+RUN pnpm run build
 
 # Production stage
 FROM node:20-alpine AS production
