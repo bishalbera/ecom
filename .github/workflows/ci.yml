@@ -216,78 +216,17 @@ jobs:
       
       - name: Prepare service build context
         run: |
-          # Check if this is a Node.js service
+          # Copy packages to service directory for Docker build
           if [ -f "./apps/${{ matrix.service }}/package.json" ]; then
             echo "Preparing Node.js service: ${{ matrix.service }}"
             
-            # Install dependencies at root level first
-            pnpm install --frozen-lockfile
-            
-            # Copy only the packages that this service actually needs
+            # Copy packages directory to service directory
             if [ -d "packages" ]; then
-              echo "Copying required packages to service directory..."
-              mkdir -p "./apps/${{ matrix.service }}/packages"
-              
-              # Extract package dependencies from package.json
-              cd "./apps/${{ matrix.service }}"
-              REQUIRED_PACKAGES=$(node -e "
-                const fs = require('fs');
-                const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-                const deps = {...(pkg.dependencies || {}), ...(pkg.devDependencies || {})};
-                const repoDeps = Object.keys(deps).filter(dep => dep.startsWith('@repo/'));
-                console.log(repoDeps.map(dep => dep.replace('@repo/', '')).join(' '));
-              ")
-              cd ../..
-              
-              # Copy only the required packages
-              for package in $REQUIRED_PACKAGES; do
-                if [ -d "packages/$package" ]; then
-                  echo "Copying package: $package"
-                  cp -r "packages/$package" "./apps/${{ matrix.service }}/packages/"
-                else
-                  echo "Warning: Package $package not found in packages directory"
-                fi
-              done
+              echo "Copying packages to service directory..."
+              cp -r packages "./apps/${{ matrix.service }}/"
             fi
             
-            # Copy essential root files
-            cp package.json "./apps/${{ matrix.service }}/root-package.json"
-            # Navigate to service directory
-            cd "./apps/${{ matrix.service }}"
-            
-            # Update service's package.json to use local packages instead of workspace:*
-            node -e "
-              const fs = require('fs');
-              const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-              
-              const replaceDeps = (deps) => {
-                if (!deps) return;
-                Object.keys(deps).forEach(key => {
-                  if (deps[key] === 'workspace:*') {
-                    deps[key] = 'file:packages/' + key.replace('@repo/', '');
-                  }
-                });
-              };
-              
-              replaceDeps(pkg.dependencies);
-              replaceDeps(pkg.devDependencies);
-              
-              fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
-            "
-            
-            # Create a simple workspace file for the service
-            cat > pnpm-workspace.yaml << EOF
-          packages:
-            - '.'
-            - 'packages/*'
-          EOF
-            
-            # CRITICAL FIX: Regenerate lockfile after modifying package.json
-            echo "Regenerating lockfile for modified package.json..."
-            pnpm install --no-frozen-lockfile
-            
             echo "Service build context prepared successfully"
-            cd ../..
           else
             echo "Go service detected: ${{ matrix.service }} - no preparation needed"
           fi
