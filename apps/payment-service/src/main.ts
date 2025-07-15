@@ -16,4 +16,5 @@ async function bootstrap() {
 bootstrap().catch((err) => {
   console.error('Unhandled error during bootstrap', err);
   process.exit(1);
+  
 });

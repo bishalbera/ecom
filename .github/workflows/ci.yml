@@ -48,8 +48,7 @@ jobs:
         run: pnpm install
 
       - name: Run Linting
-        # Turbo will use the remote cache and only lint changed packages
-        run: pnpm turbo run lint
+        run: pnpm turbo run lint --force
 
       # - name: Run Tests
       #   # Turbo will use the remote cache and only test changed packages
